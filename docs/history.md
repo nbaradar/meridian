@@ -138,3 +138,7 @@ The repository became public as a fresh single-commit history; the earlier priva
 - Owner-specific facts left the repository: the institution inventory and related open questions moved to the gitignored `local/` directory (a separate private repository), public docs describe provider paths generically, `PLAN.md` goals are illustrative, and the YNAB account-type suggestion no longer special-cases a bare "Robinhood" account name.
 - `.gitignore` covers `local/`, exports, database dumps, key files, and machine files. `.env` custody moved to a password manager, identical on every machine ([security and keys](architecture/security-and-keys.md)).
 - `.githooks/pre-commit`, enabled by `pnpm install`, runs gitleaks (`.gitleaks.toml`) and the optional private `local/denylist.txt` on staged changes. A gitleaks scan of the full previous history found no secrets.
+
+## 2026-09-25 — Workflow skills moved to per-user installs
+
+`/project-status`, `/plan-unit`, and `/implement-plan` were removed from `.claude/skills/`. They now live, generic, in the `doc-routed-agentic-coding` repository and are installed once per user, symlinked into `~/.claude/skills/`, so one copy serves every project. The workflow's rules stay in `AGENTS.md`, which now describes the skills as optional and states that a plan is Approved only with the owner's explicit approval.

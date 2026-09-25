@@ -99,11 +99,11 @@ If a feature doesn't fit cleanly, clarify ownership and boundaries before coding
 The owner and an agent design together; an agent then implements alone because the plan holds everything it needs.
 
 1. **Design.** If the unit changes a core `ledger.*` boundary or another architectural decision, write an RFC in `docs/decisions/` (see its `README.md`) and get it accepted first.
-2. **Plan.** Write a plan from `docs/plans/TEMPLATE.md`. It is **Approved** only when the owner approves it and it has no open questions.
+2. **Plan.** Write a plan from `docs/plans/TEMPLATE.md`. It is **Approved** only when the owner explicitly approves it and it has no open questions.
 3. **Implement.** Only Approved plans. Set it **In progress** and link it from `docs/status.md`. Follow its Decisions already made without re-asking, treat its Non-goals as hard boundaries, and stop under its "Stop and ask if" conditions and "When to stop and ask" below. A small change may proceed without a plan, but the Definition of Done still applies.
 4. **Finish.** Complete the Definition of Done before reporting done.
 
-Skills in `.claude/skills/`: `/plan-unit` (stage 2), `/implement-plan` (stages 3–4), `/project-status` (short status report).
+Optional Claude Code skills, installed per user from the `doc-routed-agentic-coding` repository: `/project-status` (short status report), `/plan-unit` (stage 2: design, plan, approval, resume a Draft), `/implement-plan` (stages 3–4). The rules above apply with or without them.
 
 ### Definition of Done
 
