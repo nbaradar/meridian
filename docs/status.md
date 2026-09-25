@@ -21,11 +21,11 @@ Net worth before transaction authority: balances are observations separate from 
 
 1. ~~RFC 0005: YNAB account persistence~~ — done 2026-09-25 ([history](history.md)).
 2. **Balance observations RFC, then the net-worth dashboard.** Latest balance per canonical account from manual entry, the YNAB export's working balance, and later SimpleFIN. Adds to core `ledger.*`, so needs review.
-3. **Account details store** ([expansion](future/expansion.md#deferred-feature-user-entered-account-details)): institution name (plaintext, for grouping) and encrypted account/routing numbers. Until then the dashboard groups by account type.
-4. **RFC 0004 rollout unit two onward**, starting with [Plan 0001](plans/0001-rfc-0004-authority-and-reconciliation.md).
+3. **RFC 0004 rollout unit two**, [Plan 0001](plans/0001-rfc-0004-authority-and-reconciliation.md), directly after Plan 0002 (moved up 2026-09-25 so both can run in one session). Later RFC 0004 units follow the account details store.
+4. **Account details store** ([expansion](future/expansion.md#deferred-feature-user-entered-account-details)): institution name (plaintext, for grouping) and encrypted account/routing numbers. Until then the dashboard groups by account type.
 
 ## Plans ([index](plans/README.md))
 
 - **In progress:** none.
 - **Next to implement:** [Plan 0002](plans/0002-balance-observations-and-net-worth.md), balance observations and the net-worth dashboard (step 2), implementing the accepted [RFC 0006](decisions/0006-balance-observations.md). Approved 2026-09-25.
-- **Draft:** [Plan 0001](plans/0001-rfc-0004-authority-and-reconciliation.md), RFC 0004 unit two (step 4), with the original handoff text.
+- **Then:** [Plan 0001](plans/0001-rfc-0004-authority-and-reconciliation.md), RFC 0004 unit two (step 3), to implement after Plan 0002 is Done. Approved 2026-09-25.
