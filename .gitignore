@@ -1,0 +1,27 @@
+node_modules/
+.next/
+coverage/
+*.tsbuildinfo
+pnpm-debug.log*
+
+# Secrets: keep .env in a password manager, never in git.
+.env
+.env.*
+!.env.example
+*.pem
+*.key
+
+# Owner-specific data: a separate private repository cloned here (see README).
+local/
+
+# Financial data never enters any repository.
+docs/decisions/ynab_exports/
+imports/
+*.dump
+*.sql.gz
+*.sql.gpg
+*.sql.age
+
+# Machine and editor files.
+.DS_Store
+.claude/settings.local.json

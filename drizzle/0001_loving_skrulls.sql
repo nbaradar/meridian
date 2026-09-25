@@ -1,0 +1,4 @@
+ALTER TABLE "ledger"."transactions" ADD COLUMN "origin" text NOT NULL;--> statement-breakpoint
+ALTER TABLE "ledger"."transactions" ADD CONSTRAINT "transactions_origin_check" CHECK ("ledger"."transactions"."origin" in ('manual', 'system', 'external'));--> statement-breakpoint
+ALTER TABLE "ledger"."transactions" ADD CONSTRAINT "transactions_origin_source_check" CHECK (("ledger"."transactions"."origin" = 'external') = ("ledger"."transactions"."source_record_id" is not null));--> statement-breakpoint
+ALTER TABLE "ledger"."transactions" ADD CONSTRAINT "transactions_correction_origin_check" CHECK ("ledger"."transactions"."corrects_transaction_id" is null or "ledger"."transactions"."origin" = 'system');

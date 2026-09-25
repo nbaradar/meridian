@@ -1,0 +1,1 @@
+ALTER TABLE "ledger"."accounts" ADD COLUMN "opened_on" date;

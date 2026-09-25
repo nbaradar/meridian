@@ -1,0 +1,8 @@
+# gitleaks configuration for the pre-commit hook (.githooks/pre-commit).
+[extend]
+useDefault = true
+
+[allowlist]
+description = "Documented local-only placeholders and lockfile integrity hashes"
+paths = ['''^pnpm-lock\.yaml$''']
+regexes = ['''replace-with-base64-encoded-32-byte-key''']

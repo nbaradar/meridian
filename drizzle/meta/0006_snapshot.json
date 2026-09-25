@@ -1,0 +1,969 @@
+{
+  "id": "3d6debca-407c-4336-a7b8-7b06cd0d1e64",
+  "prevId": "09cbfa12-979d-4304-9c9a-5a8961f2948c",
+  "version": "7",
+  "dialect": "postgresql",
+  "tables": {
+    "ledger.account_revisions": {
+      "name": "account_revisions",
+      "schema": "ledger",
+      "columns": {
+        "id": {
+          "name": "id",
+          "type": "uuid",
+          "primaryKey": true,
+          "notNull": true
+        },
+        "account_id": {
+          "name": "account_id",
+          "type": "uuid",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "name": {
+          "name": "name",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "status": {
+          "name": "status",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "display_metadata": {
+          "name": "display_metadata",
+          "type": "jsonb",
+          "primaryKey": false,
+          "notNull": true,
+          "default": "'{}'::jsonb"
+        },
+        "effective_at": {
+          "name": "effective_at",
+          "type": "timestamp with time zone",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "recorded_at": {
+          "name": "recorded_at",
+          "type": "timestamp with time zone",
+          "primaryKey": false,
+          "notNull": true,
+          "default": "now()"
+        }
+      },
+      "indexes": {
+        "account_revisions_current_idx": {
+          "name": "account_revisions_current_idx",
+          "columns": [
+            {
+              "expression": "account_id",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            },
+            {
+              "expression": "effective_at",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            },
+            {
+              "expression": "recorded_at",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            }
+          ],
+          "isUnique": false,
+          "concurrently": false,
+          "method": "btree",
+          "with": {}
+        }
+      },
+      "foreignKeys": {
+        "account_revisions_account_id_accounts_id_fk": {
+          "name": "account_revisions_account_id_accounts_id_fk",
+          "tableFrom": "account_revisions",
+          "tableTo": "accounts",
+          "schemaTo": "ledger",
+          "columnsFrom": ["account_id"],
+          "columnsTo": ["id"],
+          "onDelete": "no action",
+          "onUpdate": "no action"
+        }
+      },
+      "compositePrimaryKeys": {},
+      "uniqueConstraints": {},
+      "policies": {},
+      "checkConstraints": {
+        "account_revisions_name_check": {
+          "name": "account_revisions_name_check",
+          "value": "length(btrim(\"ledger\".\"account_revisions\".\"name\")) > 0"
+        },
+        "account_revisions_status_check": {
+          "name": "account_revisions_status_check",
+          "value": "\"ledger\".\"account_revisions\".\"status\" in ('active', 'closed')"
+        }
+      },
+      "isRLSEnabled": false
+    },
+    "ledger.accounts": {
+      "name": "accounts",
+      "schema": "ledger",
+      "columns": {
+        "id": {
+          "name": "id",
+          "type": "uuid",
+          "primaryKey": true,
+          "notNull": true
+        },
+        "kind": {
+          "name": "kind",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "type": {
+          "name": "type",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "currency": {
+          "name": "currency",
+          "type": "char(3)",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "opened_on": {
+          "name": "opened_on",
+          "type": "date",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "recorded_at": {
+          "name": "recorded_at",
+          "type": "timestamp with time zone",
+          "primaryKey": false,
+          "notNull": true,
+          "default": "now()"
+        }
+      },
+      "indexes": {},
+      "foreignKeys": {},
+      "compositePrimaryKeys": {},
+      "uniqueConstraints": {},
+      "policies": {},
+      "checkConstraints": {
+        "accounts_class_check": {
+          "name": "accounts_class_check",
+          "value": "\"ledger\".\"accounts\".\"kind\" in ('asset', 'liability')"
+        },
+        "accounts_type_check": {
+          "name": "accounts_type_check",
+          "value": "\"ledger\".\"accounts\".\"type\" in ('checking', 'savings', 'cash', 'credit_card', 'loan', 'mortgage', 'brokerage', 'retirement', 'crypto', 'other')"
+        },
+        "accounts_type_class_check": {
+          "name": "accounts_type_class_check",
+          "value": "(\n        (\"ledger\".\"accounts\".\"type\" in ('checking', 'savings', 'cash', 'brokerage', 'retirement', 'crypto') and \"ledger\".\"accounts\".\"kind\" = 'asset')\n        or (\"ledger\".\"accounts\".\"type\" in ('credit_card', 'loan', 'mortgage') and \"ledger\".\"accounts\".\"kind\" = 'liability')\n        or \"ledger\".\"accounts\".\"type\" = 'other'\n      )"
+        },
+        "accounts_currency_check": {
+          "name": "accounts_currency_check",
+          "value": "\"ledger\".\"accounts\".\"currency\" = 'USD'"
+        }
+      },
+      "isRLSEnabled": false
+    },
+    "ledger.categories": {
+      "name": "categories",
+      "schema": "ledger",
+      "columns": {
+        "id": {
+          "name": "id",
+          "type": "uuid",
+          "primaryKey": true,
+          "notNull": true
+        },
+        "kind": {
+          "name": "kind",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "recorded_at": {
+          "name": "recorded_at",
+          "type": "timestamp with time zone",
+          "primaryKey": false,
+          "notNull": true,
+          "default": "now()"
+        }
+      },
+      "indexes": {},
+      "foreignKeys": {},
+      "compositePrimaryKeys": {},
+      "uniqueConstraints": {},
+      "policies": {},
+      "checkConstraints": {
+        "categories_kind_check": {
+          "name": "categories_kind_check",
+          "value": "\"ledger\".\"categories\".\"kind\" in ('expense', 'income', 'transfer')"
+        }
+      },
+      "isRLSEnabled": false
+    },
+    "ledger.category_revisions": {
+      "name": "category_revisions",
+      "schema": "ledger",
+      "columns": {
+        "id": {
+          "name": "id",
+          "type": "uuid",
+          "primaryKey": true,
+          "notNull": true
+        },
+        "category_id": {
+          "name": "category_id",
+          "type": "uuid",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "parent_category_id": {
+          "name": "parent_category_id",
+          "type": "uuid",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "name": {
+          "name": "name",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "effective_at": {
+          "name": "effective_at",
+          "type": "timestamp with time zone",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "recorded_at": {
+          "name": "recorded_at",
+          "type": "timestamp with time zone",
+          "primaryKey": false,
+          "notNull": true,
+          "default": "now()"
+        }
+      },
+      "indexes": {
+        "category_revisions_current_idx": {
+          "name": "category_revisions_current_idx",
+          "columns": [
+            {
+              "expression": "category_id",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            },
+            {
+              "expression": "effective_at",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            },
+            {
+              "expression": "recorded_at",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            }
+          ],
+          "isUnique": false,
+          "concurrently": false,
+          "method": "btree",
+          "with": {}
+        }
+      },
+      "foreignKeys": {
+        "category_revisions_category_id_categories_id_fk": {
+          "name": "category_revisions_category_id_categories_id_fk",
+          "tableFrom": "category_revisions",
+          "tableTo": "categories",
+          "schemaTo": "ledger",
+          "columnsFrom": ["category_id"],
+          "columnsTo": ["id"],
+          "onDelete": "no action",
+          "onUpdate": "no action"
+        },
+        "category_revisions_parent_category_id_categories_id_fk": {
+          "name": "category_revisions_parent_category_id_categories_id_fk",
+          "tableFrom": "category_revisions",
+          "tableTo": "categories",
+          "schemaTo": "ledger",
+          "columnsFrom": ["parent_category_id"],
+          "columnsTo": ["id"],
+          "onDelete": "no action",
+          "onUpdate": "no action"
+        }
+      },
+      "compositePrimaryKeys": {},
+      "uniqueConstraints": {},
+      "policies": {},
+      "checkConstraints": {
+        "category_revisions_name_check": {
+          "name": "category_revisions_name_check",
+          "value": "length(btrim(\"ledger\".\"category_revisions\".\"name\")) > 0"
+        },
+        "category_revisions_parent_check": {
+          "name": "category_revisions_parent_check",
+          "value": "\"ledger\".\"category_revisions\".\"parent_category_id\" is null or \"ledger\".\"category_revisions\".\"parent_category_id\" <> \"ledger\".\"category_revisions\".\"category_id\""
+        }
+      },
+      "isRLSEnabled": false
+    },
+    "ledger.entries": {
+      "name": "entries",
+      "schema": "ledger",
+      "columns": {
+        "id": {
+          "name": "id",
+          "type": "uuid",
+          "primaryKey": true,
+          "notNull": true
+        },
+        "transaction_id": {
+          "name": "transaction_id",
+          "type": "uuid",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "account_id": {
+          "name": "account_id",
+          "type": "uuid",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "category_id": {
+          "name": "category_id",
+          "type": "uuid",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "amount": {
+          "name": "amount",
+          "type": "numeric",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "recorded_at": {
+          "name": "recorded_at",
+          "type": "timestamp with time zone",
+          "primaryKey": false,
+          "notNull": true,
+          "default": "now()"
+        }
+      },
+      "indexes": {
+        "entries_transaction_idx": {
+          "name": "entries_transaction_idx",
+          "columns": [
+            {
+              "expression": "transaction_id",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            }
+          ],
+          "isUnique": false,
+          "concurrently": false,
+          "method": "btree",
+          "with": {}
+        },
+        "entries_account_idx": {
+          "name": "entries_account_idx",
+          "columns": [
+            {
+              "expression": "account_id",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            }
+          ],
+          "isUnique": false,
+          "concurrently": false,
+          "method": "btree",
+          "with": {}
+        },
+        "entries_category_idx": {
+          "name": "entries_category_idx",
+          "columns": [
+            {
+              "expression": "category_id",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            }
+          ],
+          "isUnique": false,
+          "concurrently": false,
+          "method": "btree",
+          "with": {}
+        }
+      },
+      "foreignKeys": {
+        "entries_transaction_id_transactions_id_fk": {
+          "name": "entries_transaction_id_transactions_id_fk",
+          "tableFrom": "entries",
+          "tableTo": "transactions",
+          "schemaTo": "ledger",
+          "columnsFrom": ["transaction_id"],
+          "columnsTo": ["id"],
+          "onDelete": "no action",
+          "onUpdate": "no action"
+        },
+        "entries_account_id_accounts_id_fk": {
+          "name": "entries_account_id_accounts_id_fk",
+          "tableFrom": "entries",
+          "tableTo": "accounts",
+          "schemaTo": "ledger",
+          "columnsFrom": ["account_id"],
+          "columnsTo": ["id"],
+          "onDelete": "no action",
+          "onUpdate": "no action"
+        },
+        "entries_category_id_categories_id_fk": {
+          "name": "entries_category_id_categories_id_fk",
+          "tableFrom": "entries",
+          "tableTo": "categories",
+          "schemaTo": "ledger",
+          "columnsFrom": ["category_id"],
+          "columnsTo": ["id"],
+          "onDelete": "no action",
+          "onUpdate": "no action"
+        }
+      },
+      "compositePrimaryKeys": {},
+      "uniqueConstraints": {},
+      "policies": {},
+      "checkConstraints": {
+        "entries_destination_check": {
+          "name": "entries_destination_check",
+          "value": "num_nonnulls(\"ledger\".\"entries\".\"account_id\", \"ledger\".\"entries\".\"category_id\") = 1"
+        }
+      },
+      "isRLSEnabled": false
+    },
+    "ledger.imports": {
+      "name": "imports",
+      "schema": "ledger",
+      "columns": {
+        "id": {
+          "name": "id",
+          "type": "uuid",
+          "primaryKey": true,
+          "notNull": true
+        },
+        "importer_id": {
+          "name": "importer_id",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "importer_version": {
+          "name": "importer_version",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "content_digest": {
+          "name": "content_digest",
+          "type": "char(64)",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "raw_payload_id": {
+          "name": "raw_payload_id",
+          "type": "uuid",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "imported_at": {
+          "name": "imported_at",
+          "type": "timestamp with time zone",
+          "primaryKey": false,
+          "notNull": true,
+          "default": "now()"
+        }
+      },
+      "indexes": {
+        "imports_content_unique": {
+          "name": "imports_content_unique",
+          "columns": [
+            {
+              "expression": "importer_id",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            },
+            {
+              "expression": "importer_version",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            },
+            {
+              "expression": "content_digest",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            }
+          ],
+          "isUnique": true,
+          "concurrently": false,
+          "method": "btree",
+          "with": {}
+        }
+      },
+      "foreignKeys": {
+        "imports_raw_payload_id_raw_payloads_id_fk": {
+          "name": "imports_raw_payload_id_raw_payloads_id_fk",
+          "tableFrom": "imports",
+          "tableTo": "raw_payloads",
+          "schemaTo": "ledger",
+          "columnsFrom": ["raw_payload_id"],
+          "columnsTo": ["id"],
+          "onDelete": "no action",
+          "onUpdate": "no action"
+        }
+      },
+      "compositePrimaryKeys": {},
+      "uniqueConstraints": {},
+      "policies": {},
+      "checkConstraints": {
+        "imports_importer_id_check": {
+          "name": "imports_importer_id_check",
+          "value": "length(btrim(\"ledger\".\"imports\".\"importer_id\")) > 0"
+        },
+        "imports_importer_version_check": {
+          "name": "imports_importer_version_check",
+          "value": "length(btrim(\"ledger\".\"imports\".\"importer_version\")) > 0"
+        },
+        "imports_digest_check": {
+          "name": "imports_digest_check",
+          "value": "\"ledger\".\"imports\".\"content_digest\" ~ '^[0-9a-f]{64}$'"
+        }
+      },
+      "isRLSEnabled": false
+    },
+    "ledger.raw_payloads": {
+      "name": "raw_payloads",
+      "schema": "ledger",
+      "columns": {
+        "id": {
+          "name": "id",
+          "type": "uuid",
+          "primaryKey": true,
+          "notNull": true
+        },
+        "source": {
+          "name": "source",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "content_digest": {
+          "name": "content_digest",
+          "type": "char(64)",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "encryption_algorithm": {
+          "name": "encryption_algorithm",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "encryption_key_id": {
+          "name": "encryption_key_id",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "nonce": {
+          "name": "nonce",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "ciphertext": {
+          "name": "ciphertext",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "fetched_at": {
+          "name": "fetched_at",
+          "type": "timestamp with time zone",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "ingested_at": {
+          "name": "ingested_at",
+          "type": "timestamp with time zone",
+          "primaryKey": false,
+          "notNull": true
+        }
+      },
+      "indexes": {},
+      "foreignKeys": {},
+      "compositePrimaryKeys": {},
+      "uniqueConstraints": {},
+      "policies": {},
+      "checkConstraints": {
+        "raw_payloads_source_check": {
+          "name": "raw_payloads_source_check",
+          "value": "length(btrim(\"ledger\".\"raw_payloads\".\"source\")) > 0"
+        },
+        "raw_payloads_digest_check": {
+          "name": "raw_payloads_digest_check",
+          "value": "\"ledger\".\"raw_payloads\".\"content_digest\" ~ '^[0-9a-f]{64}$'"
+        },
+        "raw_payloads_algorithm_check": {
+          "name": "raw_payloads_algorithm_check",
+          "value": "length(btrim(\"ledger\".\"raw_payloads\".\"encryption_algorithm\")) > 0"
+        },
+        "raw_payloads_key_id_check": {
+          "name": "raw_payloads_key_id_check",
+          "value": "length(btrim(\"ledger\".\"raw_payloads\".\"encryption_key_id\")) > 0"
+        },
+        "raw_payloads_nonce_check": {
+          "name": "raw_payloads_nonce_check",
+          "value": "length(\"ledger\".\"raw_payloads\".\"nonce\") > 0"
+        },
+        "raw_payloads_ciphertext_check": {
+          "name": "raw_payloads_ciphertext_check",
+          "value": "length(\"ledger\".\"raw_payloads\".\"ciphertext\") > 0"
+        }
+      },
+      "isRLSEnabled": false
+    },
+    "ledger.source_records": {
+      "name": "source_records",
+      "schema": "ledger",
+      "columns": {
+        "id": {
+          "name": "id",
+          "type": "uuid",
+          "primaryKey": true,
+          "notNull": true
+        },
+        "source": {
+          "name": "source",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "source_ref": {
+          "name": "source_ref",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "content_digest": {
+          "name": "content_digest",
+          "type": "char(64)",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "raw_payload_id": {
+          "name": "raw_payload_id",
+          "type": "uuid",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "supersedes_source_record_id": {
+          "name": "supersedes_source_record_id",
+          "type": "uuid",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "ingested_at": {
+          "name": "ingested_at",
+          "type": "timestamp with time zone",
+          "primaryKey": false,
+          "notNull": true
+        }
+      },
+      "indexes": {
+        "source_records_version_unique": {
+          "name": "source_records_version_unique",
+          "columns": [
+            {
+              "expression": "source",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            },
+            {
+              "expression": "source_ref",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            },
+            {
+              "expression": "content_digest",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            }
+          ],
+          "isUnique": true,
+          "concurrently": false,
+          "method": "btree",
+          "with": {}
+        },
+        "source_records_supersedes_unique": {
+          "name": "source_records_supersedes_unique",
+          "columns": [
+            {
+              "expression": "supersedes_source_record_id",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            }
+          ],
+          "isUnique": true,
+          "concurrently": false,
+          "method": "btree",
+          "with": {}
+        },
+        "source_records_root_unique": {
+          "name": "source_records_root_unique",
+          "columns": [
+            {
+              "expression": "source",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            },
+            {
+              "expression": "source_ref",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            }
+          ],
+          "isUnique": true,
+          "where": "\"ledger\".\"source_records\".\"supersedes_source_record_id\" is null",
+          "concurrently": false,
+          "method": "btree",
+          "with": {}
+        }
+      },
+      "foreignKeys": {
+        "source_records_raw_payload_id_raw_payloads_id_fk": {
+          "name": "source_records_raw_payload_id_raw_payloads_id_fk",
+          "tableFrom": "source_records",
+          "tableTo": "raw_payloads",
+          "schemaTo": "ledger",
+          "columnsFrom": ["raw_payload_id"],
+          "columnsTo": ["id"],
+          "onDelete": "no action",
+          "onUpdate": "no action"
+        },
+        "source_records_supersedes_source_record_id_source_records_id_fk": {
+          "name": "source_records_supersedes_source_record_id_source_records_id_fk",
+          "tableFrom": "source_records",
+          "tableTo": "source_records",
+          "schemaTo": "ledger",
+          "columnsFrom": ["supersedes_source_record_id"],
+          "columnsTo": ["id"],
+          "onDelete": "no action",
+          "onUpdate": "no action"
+        }
+      },
+      "compositePrimaryKeys": {},
+      "uniqueConstraints": {},
+      "policies": {},
+      "checkConstraints": {
+        "source_records_source_check": {
+          "name": "source_records_source_check",
+          "value": "length(btrim(\"ledger\".\"source_records\".\"source\")) > 0"
+        },
+        "source_records_source_ref_check": {
+          "name": "source_records_source_ref_check",
+          "value": "length(btrim(\"ledger\".\"source_records\".\"source_ref\")) > 0"
+        },
+        "source_records_digest_check": {
+          "name": "source_records_digest_check",
+          "value": "\"ledger\".\"source_records\".\"content_digest\" ~ '^[0-9a-f]{64}$'"
+        },
+        "source_records_not_self_check": {
+          "name": "source_records_not_self_check",
+          "value": "\"ledger\".\"source_records\".\"supersedes_source_record_id\" is null or \"ledger\".\"source_records\".\"supersedes_source_record_id\" <> \"ledger\".\"source_records\".\"id\""
+        }
+      },
+      "isRLSEnabled": false
+    },
+    "ledger.transactions": {
+      "name": "transactions",
+      "schema": "ledger",
+      "columns": {
+        "id": {
+          "name": "id",
+          "type": "uuid",
+          "primaryKey": true,
+          "notNull": true
+        },
+        "occurred_on": {
+          "name": "occurred_on",
+          "type": "date",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "occurred_at": {
+          "name": "occurred_at",
+          "type": "timestamp with time zone",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "description": {
+          "name": "description",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "currency": {
+          "name": "currency",
+          "type": "char(3)",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "origin": {
+          "name": "origin",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "source_record_id": {
+          "name": "source_record_id",
+          "type": "uuid",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "corrects_transaction_id": {
+          "name": "corrects_transaction_id",
+          "type": "uuid",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "recorded_at": {
+          "name": "recorded_at",
+          "type": "timestamp with time zone",
+          "primaryKey": false,
+          "notNull": true,
+          "default": "now()"
+        }
+      },
+      "indexes": {
+        "transactions_source_record_unique": {
+          "name": "transactions_source_record_unique",
+          "columns": [
+            {
+              "expression": "source_record_id",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            }
+          ],
+          "isUnique": true,
+          "concurrently": false,
+          "method": "btree",
+          "with": {}
+        },
+        "transactions_correction_unique": {
+          "name": "transactions_correction_unique",
+          "columns": [
+            {
+              "expression": "corrects_transaction_id",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            }
+          ],
+          "isUnique": true,
+          "concurrently": false,
+          "method": "btree",
+          "with": {}
+        }
+      },
+      "foreignKeys": {
+        "transactions_source_record_id_source_records_id_fk": {
+          "name": "transactions_source_record_id_source_records_id_fk",
+          "tableFrom": "transactions",
+          "tableTo": "source_records",
+          "schemaTo": "ledger",
+          "columnsFrom": ["source_record_id"],
+          "columnsTo": ["id"],
+          "onDelete": "no action",
+          "onUpdate": "no action"
+        },
+        "transactions_corrects_transaction_id_transactions_id_fk": {
+          "name": "transactions_corrects_transaction_id_transactions_id_fk",
+          "tableFrom": "transactions",
+          "tableTo": "transactions",
+          "schemaTo": "ledger",
+          "columnsFrom": ["corrects_transaction_id"],
+          "columnsTo": ["id"],
+          "onDelete": "no action",
+          "onUpdate": "no action"
+        }
+      },
+      "compositePrimaryKeys": {},
+      "uniqueConstraints": {},
+      "policies": {},
+      "checkConstraints": {
+        "transactions_description_check": {
+          "name": "transactions_description_check",
+          "value": "length(btrim(\"ledger\".\"transactions\".\"description\")) > 0"
+        },
+        "transactions_currency_check": {
+          "name": "transactions_currency_check",
+          "value": "\"ledger\".\"transactions\".\"currency\" = 'USD'"
+        },
+        "transactions_origin_check": {
+          "name": "transactions_origin_check",
+          "value": "\"ledger\".\"transactions\".\"origin\" in ('manual', 'system', 'external')"
+        },
+        "transactions_origin_source_check": {
+          "name": "transactions_origin_source_check",
+          "value": "(\"ledger\".\"transactions\".\"origin\" = 'external') = (\"ledger\".\"transactions\".\"source_record_id\" is not null)"
+        },
+        "transactions_not_self_correction_check": {
+          "name": "transactions_not_self_correction_check",
+          "value": "\"ledger\".\"transactions\".\"corrects_transaction_id\" is null or \"ledger\".\"transactions\".\"corrects_transaction_id\" <> \"ledger\".\"transactions\".\"id\""
+        },
+        "transactions_correction_source_check": {
+          "name": "transactions_correction_source_check",
+          "value": "\"ledger\".\"transactions\".\"corrects_transaction_id\" is null or \"ledger\".\"transactions\".\"source_record_id\" is null"
+        },
+        "transactions_correction_origin_check": {
+          "name": "transactions_correction_origin_check",
+          "value": "\"ledger\".\"transactions\".\"corrects_transaction_id\" is null or \"ledger\".\"transactions\".\"origin\" = 'system'"
+        }
+      },
+      "isRLSEnabled": false
+    }
+  },
+  "enums": {},
+  "schemas": {},
+  "sequences": {},
+  "roles": {},
+  "policies": {},
+  "views": {},
+  "_meta": {
+    "columns": {},
+    "schemas": {},
+    "tables": {}
+  }
+}

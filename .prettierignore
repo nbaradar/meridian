@@ -1,0 +1,6 @@
+.next/
+node_modules/
+coverage/
+AGENTS.md
+PLAN.md
+pnpm-lock.yaml

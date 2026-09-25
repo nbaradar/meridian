@@ -1,0 +1,1 @@
+ALTER TABLE "ledger"."accounts" ALTER COLUMN "type" DROP DEFAULT;

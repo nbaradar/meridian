@@ -1,0 +1,28 @@
+#!/bin/sh
+# Blocks commits that would publish a secret or an owner-specific term.
+# Enabled by `pnpm install` (the prepare script sets core.hooksPath).
+# Bypass for a verified false positive only: git commit --no-verify
+set -eu
+
+if ! command -v gitleaks >/dev/null 2>&1; then
+  echo "pre-commit: gitleaks is not installed (brew install gitleaks); refusing to commit." >&2
+  exit 1
+fi
+gitleaks git --staged --no-banner --redact --config .gitleaks.toml
+
+# Optional private denylist from the gitignored local/ directory (see README).
+denylist=local/denylist.txt
+if [ -f "$denylist" ]; then
+  patterns=$(mktemp)
+  trap 'rm -f "$patterns"' EXIT
+  grep -v -e '^[[:space:]]*#' -e '^[[:space:]]*$' "$denylist" >"$patterns" || true
+  if [ -s "$patterns" ]; then
+    matches=$(git diff --cached -U0 --no-color | grep '^+' | grep -v '^+++' |
+      grep -i -F -o -f "$patterns" | sort -u || true)
+    if [ -n "$matches" ]; then
+      echo "pre-commit: staged changes contain terms from $denylist:" >&2
+      echo "$matches" | sed 's/^/  /' >&2
+      exit 1
+    fi
+  fi
+fi
