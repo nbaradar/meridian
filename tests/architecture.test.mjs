@@ -130,3 +130,44 @@ test("operational key access stays inside protected-data and read workers", asyn
     );
   }
 });
+
+test("transaction authority and reconciliation cannot record a transaction", async () => {
+  const files = [
+    "src/core/ledger/transaction-authority.ts",
+    "src/core/ledger/reconciliation.ts",
+    "src/infrastructure/database/postgres-transaction-authority.ts",
+  ];
+  for (const file of files) {
+    const source = await readFile(file, "utf8");
+    // No transaction, source-record, or balance-observation code paths.
+    expect(source, file).not.toMatch(
+      /(?:from|import\s*)[\s(]*["'][^"']*(?:\/transaction|source-record|balance-observations|postgres-ledger-destinations)["']/u,
+    );
+    // Reads of entries and transactions are allowed; writes are not.
+    expect(source, file).not.toMatch(
+      /insert\s+into\s+ledger\.(?:transactions|entries|source_records|raw_payloads|imports|balance_observations)\b/iu,
+    );
+    expect(source, file).not.toMatch(/\b(?:console|logger)\s*\./u);
+  }
+  // The store port exposes no transaction write.
+  const core = await readFile(
+    "src/core/ledger/transaction-authority.ts",
+    "utf8",
+  );
+  const port = core.slice(
+    core.indexOf("export interface TransactionAuthorityStore"),
+    core.indexOf("/** Identifies a failed authority decision"),
+  );
+  const methods = [...port.matchAll(/^\s{2}(\w+)\(/gmu)].map(
+    (match) => match[1],
+  );
+  expect(methods.sort()).toEqual([
+    "appendRevision",
+    "findAccountSource",
+    "findReconciliationCheck",
+    "findRevision",
+    "ledgerBalanceBefore",
+    "listCurrentWindows",
+    "recordReconciliationCheck",
+  ]);
+});

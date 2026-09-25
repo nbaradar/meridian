@@ -5,7 +5,7 @@ read_when: Importing or normalizing transactions, reconciliation, authority wind
 
 # RFC 0004: Transaction source authority and cutover
 
-- Status: Accepted, association stage implemented 2026-08-03
+- Status: Accepted, association stage implemented 2026-08-03; authority and reconciliation stage implemented 2026-09-25
 - Date: 2026-08-03
 - Decision owners: project owner and implementer
 - Depends on: RFC 0001 and RFC 0002
@@ -594,11 +594,37 @@ source compatibility, member counts, one non-branching tip, append-only
 behavior, and deterministic account-source lock order; concurrency failures map
 to contextual conflicts.
 
-Rollout units two through six are not implemented. There are no authority
-windows, processing revisions, authority evidence, exceptions, reconciliation
-checks, changed transaction cardinality, YNAB persistence, cutover activation,
-or monetary writes. The existing architecture prohibition on linkage-driven
-transaction recording remains in force.
+Rollout unit two was implemented on September 25, 2026 by migration
+`0013_previous_catseye.sql` ([Plan 0001](../plans/0001-rfc-0004-authority-and-reconciliation.md)).
+`ledger.transaction_authority_revisions` and the view
+`ledger.current_transaction_authority_windows` hold one linear chain per
+authority window (`proposed` root, then `active` and/or `revoked`, with checked
+reason codes). `ledger.reconciliation_checks` holds immutable evidence.
+PostgreSQL enforces one root and one successor per revision, valid transitions,
+unchanged window identity and range across a chain, the exact current RFC 0002
+link at activation, non-overlapping active windows per account, and, for a
+`connector` source, a `passed` check for the same account, source, and cutoff
+(`starts_on`); an `import` source activates without one. Decisions lock the
+authority window, then the canonical account, then the account source, which
+is the lock RFC 0002 link revisions take, so activation and relink serialize.
+The check trigger computes `ledger_balance` (the account's entries dated before
+the cutoff) and `difference`; a `CHECK` rejects a result inconsistent with the
+difference and tolerance. Core derives the result from a reviewed
+`(provider, semantic, tolerance)` registry that is empty, so every real check
+is `not_comparable` and no connector window can activate. Evaluation is
+read-only (`evaluateTransactionAuthority`), and an architecture test keeps the
+authority service and adapter from recording transactions.
+
+The ledger side uses the net-worth sign the owner confirmed on September 25,
+2026 (see [ledger model](../architecture/ledger-model.md#entry-sign-convention)):
+it is a plain sum of account entries, compared with the provider balance in
+RFC 0006's sign.
+
+Rollout units three through six are not implemented. There are no processing
+revisions, authority evidence, exceptions, reviewed balance policies, changed
+transaction cardinality, YNAB persistence, cutover activation, or monetary
+writes. The existing architecture prohibition on linkage-driven transaction
+recording remains in force.
 
 ## Consequences
 

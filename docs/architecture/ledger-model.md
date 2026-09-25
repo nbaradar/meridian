@@ -11,7 +11,9 @@ Formerly `PLAN.md` §3, plus standing rules moved from `AGENTS.md`. Accepted RFC
 
 This is a conceptual inventory, not a migration contract. RFC 0001 defines the
 implemented transaction foundation, RFC 0002 adds canonical account-source
-linkage, and RFC 0006 adds account-level balance observations. In particular, canonical accounts do not store institution identity or
+linkage, RFC 0004 adds source-record association, transaction-authority
+windows, and reconciliation evidence, and RFC 0006 adds account-level balance
+observations. In particular, canonical accounts do not store institution identity or
 capabilities; those facts belong to source linkage and a separately reviewed
 operational connection boundary.
 
@@ -22,6 +24,17 @@ account_sources     (id, source, source_kind, ingested_at, recorded_at)
 account_source_link_revisions
                     (id, account_source_id, account_id, status, supersedes_id, ...)
 source_records      (id, source, source_ref, content_digest, supersedes_id, ...)
+transaction_authority_revisions
+                    (id, authority_window_id, account_id, account_source_id,
+                     starts_on, ends_on, status, supersedes_revision_id,
+                     reason_code, reconciliation_check_id, recorded_at)  -- RFC 0004
+current_transaction_authority_windows  -- view: tip of each window (RFC 0004)
+reconciliation_checks
+                    (id, account_id, account_source_id, cutoff_on,
+                     observation_starts_on, observation_ends_on,
+                     ledger_balance NUMERIC, provider_balance NUMERIC, currency,
+                     balance_semantic, difference NUMERIC, tolerance NUMERIC,
+                     result, raw_payload_id, recorded_at)  -- RFC 0004
 instruments         (id, symbol, kind, name, ...)          -- equities, funds, crypto, cash
 transactions        (id, occurred_on, occurred_at, description, origin,
                      source_record_id, corrects_transaction_id, ...)
@@ -82,6 +95,10 @@ interest_tags       (id, label, description, embedding vector(1536))
 - **Raw provider payloads** persist to `raw_payloads` before normalization. Never discard what the API actually returned; it is the only way to debug a normalization bug after the fact.
 - **Currency** is explicit on every amount. Do not assume USD.
 - **News dedup** is by `url_hash`, unique-constrained. Re-ingesting the same article is a no-op.
+
+## Entry sign convention
+
+**Owner decision (September 25, 2026):** an entry posted to an account carries the account's change in net-worth contribution, whatever its accounting class. A deposit to checking is positive; a credit-card purchase is negative (more owed); a card payment is positive on the card and negative on checking. The category side of the transaction takes the opposite sign so the entries sum to zero. This is the sign YNAB uses for its signed register amounts and the sign RFC 0006 uses for balance observations, so an account's ledger-derived balance is the plain sum of its entries for assets and liabilities alike, with no per-class flip. RFC 0004 reconciliation compares that sum with a provider balance in the same sign.
 
 ## Account type and accounting class
 

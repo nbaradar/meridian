@@ -46,6 +46,31 @@ export function sumAmounts(amounts: readonly DecimalAmount[]): DecimalAmount {
   return decimalAmountSchema.parse(sum.isZero() ? "0" : sum.toFixed());
 }
 
+/** Negates a canonical amount exactly, keeping zero unsigned. */
+export function negateAmount(amount: DecimalAmount): DecimalAmount {
+  if (amount === "0") return amount;
+  return decimalAmountSchema.parse(
+    amount.startsWith("-") ? amount.slice(1) : `-${amount}`,
+  );
+}
+
+/** Exact `minuend - subtrahend` as a canonical amount. */
+export function subtractAmounts(
+  minuend: DecimalAmount,
+  subtrahend: DecimalAmount,
+): DecimalAmount {
+  return sumAmounts([minuend, negateAmount(subtrahend)]);
+}
+
+/** Exact comparison of absolute values: -1, 0, or 1. */
+export function compareAbsoluteAmounts(
+  left: DecimalAmount,
+  right: DecimalAmount,
+): -1 | 0 | 1 {
+  const comparison = new Decimal(left).abs().cmp(new Decimal(right).abs());
+  return comparison < 0 ? -1 : comparison > 0 ? 1 : 0;
+}
+
 function exactSum(amounts: readonly DecimalAmount[]): Decimal {
   const digits = amounts.reduce(
     (maximum, amount) => {

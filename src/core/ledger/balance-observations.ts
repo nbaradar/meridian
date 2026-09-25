@@ -19,6 +19,7 @@ import {
 import {
   decimalAmountSchema,
   enteredDecimalAmountSchema,
+  negateAmount,
   sumAmounts,
   type DecimalAmount,
   type UsdCurrency,
@@ -229,14 +230,6 @@ export class BalanceObservationPersistenceError extends BalanceObservationError 
   }
 }
 
-/** Negates a canonical decimal string exactly, keeping zero unsigned. */
-function negate(amount: DecimalAmount): DecimalAmount {
-  if (amount === "0") return amount;
-  return decimalAmountSchema.parse(
-    amount.startsWith("-") ? amount.slice(1) : `-${amount}`,
-  );
-}
-
 /**
  * The one conversion between what the owner types and the stored amount. A
  * liability is entered as the amount owed, so owing X stores -X and a credit
@@ -246,7 +239,9 @@ export function balanceAmountFromEntry(
   accountClass: AccountClass,
   enteredAmount: DecimalAmount,
 ): DecimalAmount {
-  return accountClass === "liability" ? negate(enteredAmount) : enteredAmount;
+  return accountClass === "liability"
+    ? negateAmount(enteredAmount)
+    : enteredAmount;
 }
 
 /** The inverse of `balanceAmountFromEntry`, for pre-filling and display. */
@@ -254,7 +249,7 @@ export function entryAmountFromBalance(
   accountClass: AccountClass,
   amount: DecimalAmount,
 ): DecimalAmount {
-  return accountClass === "liability" ? negate(amount) : amount;
+  return accountClass === "liability" ? negateAmount(amount) : amount;
 }
 
 /** The server's UTC calendar date. */

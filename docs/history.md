@@ -153,3 +153,13 @@ The repository became public as a fresh single-commit history; the earlier priva
 - `/` is the net-worth dashboard with record, correct, and retract; the old home page moved unchanged to `/setup`.
 
 Verified: 182 unit and 118 integration tests across thirteen migrations, no schema drift, and the migration applied to the local database with `/`, `/setup`, and `/ynab` rendering. Recording, correcting, retracting, and saving YNAB balances were exercised in headless Chromium against a disposable database with synthetic data; no real balances were recorded.
+
+## 2026-09-25 — RFC 0004 authority windows and reconciliation checks (Plan 0001)
+
+RFC 0004 rollout unit two, migration `0013_previous_catseye.sql`: append-only `ledger.transaction_authority_revisions` with view `current_transaction_authority_windows`, and immutable `ledger.reconciliation_checks` ([RFC 0004 implementation status](decisions/0004-transaction-source-authority.md#implementation-status)).
+
+- `src/core/ledger/transaction-authority.ts` proposes, activates, and revokes half-open `[starts_on, ends_on)` windows and evaluates authority read-only; `reconciliation.ts` holds the semantic codes, the empty reviewed-policy registry, and exact result derivation. The adapter is `postgres-transaction-authority.ts`.
+- SQL enforces linear chains, transitions, the exact current link at activation, non-overlap under the window → account → account-source lock order, and a passed check for the same account, source, and cutoff before a connector window activates. The check trigger computes the ledger balance and difference.
+- The owner confirmed the entry sign convention (net-worth sign for every account entry), now in the [ledger model](architecture/ledger-model.md#entry-sign-convention).
+
+Verified: 197 unit and 128 integration tests across fourteen migrations, no schema drift, production build. The migration was applied to the local database. There is no UI or route yet.

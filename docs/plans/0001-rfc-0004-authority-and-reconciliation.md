@@ -1,13 +1,14 @@
 ---
-summary: Plan 0001 (Approved): RFC 0004 rollout unit two, transaction-authority windows and immutable reconciliation checks with read-only evaluation and no processing or monetary writes
+summary: Plan 0001 (Done): RFC 0004 rollout unit two, transaction-authority windows and immutable reconciliation checks with read-only evaluation and no processing or monetary writes
 read_when: Resuming the RFC 0004 rollout, or working on authority windows, reconciliation checks, or the YNAB-to-live cutover
 ---
 
 # Plan 0001: RFC 0004 authority windows and reconciliation checks
 
-- Status: Approved
+- Status: Done
 - Date: 2026-09-25
 - Approved: 2026-09-25
+- Done: 2026-09-25
 - Related RFCs: [RFC 0004](../decisions/0004-transaction-source-authority.md) (primary), [RFC 0002](../decisions/0002-canonical-account-source-linkage.md), [RFC 0003](../decisions/0003-operational-live-connections.md)
 - Depends on: RFC 0004 rollout unit one (done) and [Plan 0002](0002-balance-observations-and-net-worth.md) Done, whose migration precedes this unit's. Scheduled directly after Plan 0002, before the account details store; see [status.md](../status.md).
 
@@ -79,18 +80,18 @@ None.
 
 ## Acceptance criteria
 
-- [ ] PostgreSQL, not only TypeScript, prevents branching authority chains.
-- [ ] PostgreSQL prevents overlapping current active windows, including under concurrency.
-- [ ] PostgreSQL rejects invalid status transitions.
-- [ ] Activation against a stale or relinked account source is rejected.
-- [ ] Failed or `not_comparable` reconciliation blocks live activation.
-- [ ] Reconciliation checks are immutable once recorded.
-- [ ] The ledger-derived balance and difference are computed by PostgreSQL; a command cannot supply them, and a stored result inconsistent with its difference and tolerance is rejected.
-- [ ] An `import` source window activates without a check; a `connector` source window cannot activate without a `passed` check for the same account, source, and cutoff.
-- [ ] Production wiring uses the empty reviewed-policy registry, so every real check is `not_comparable`.
-- [ ] Owner and runtime roles cannot mutate or `TRUNCATE` the new tables; runtime grants are minimal.
-- [ ] Exact replays are no-ops; conflicting replays fail.
-- [ ] An architecture test proves read-only evaluation cannot record a transaction.
+- [x] PostgreSQL, not only TypeScript, prevents branching authority chains.
+- [x] PostgreSQL prevents overlapping current active windows, including under concurrency.
+- [x] PostgreSQL rejects invalid status transitions.
+- [x] Activation against a stale or relinked account source is rejected.
+- [x] Failed or `not_comparable` reconciliation blocks live activation.
+- [x] Reconciliation checks are immutable once recorded.
+- [x] The ledger-derived balance and difference are computed by PostgreSQL; a command cannot supply them, and a stored result inconsistent with its difference and tolerance is rejected.
+- [x] An `import` source window activates without a check; a `connector` source window cannot activate without a `passed` check for the same account, source, and cutoff.
+- [x] Production wiring uses the empty reviewed-policy registry, so every real check is `not_comparable`.
+- [x] Owner and runtime roles cannot mutate or `TRUNCATE` the new tables; runtime grants are minimal.
+- [x] Exact replays are no-ops; conflicting replays fail.
+- [x] An architecture test proves read-only evaluation cannot record a transaction.
 
 ## Tests required
 
@@ -121,11 +122,11 @@ pnpm build
 
 ## Documentation to update
 
-- [ ] [docs/status.md](../status.md): replace the current state, including verified counts and the next remaining RFC 0004 rollout unit
-- [ ] [docs/history.md](../history.md): one dated entry
-- [ ] [RFC 0004](../decisions/0004-transaction-source-authority.md) Implementation Status section
-- [ ] [Ledger model](../architecture/ledger-model.md), if the conceptual table list changes
-- [ ] `AGENTS.md`, only if a rule or the routing table changed
+- [x] [docs/status.md](../status.md): replace the current state, including verified counts and the next remaining RFC 0004 rollout unit
+- [x] [docs/history.md](../history.md): one dated entry
+- [x] [RFC 0004](../decisions/0004-transaction-source-authority.md) Implementation Status section
+- [x] [Ledger model](../architecture/ledger-model.md), if the conceptual table list changes
+- [x] `AGENTS.md`, only if a rule or the routing table changed
 
 ## Stop and ask if
 
@@ -137,7 +138,22 @@ pnpm build
 
 ## Completion record
 
-Not started.
+- **Date:** 2026-09-25.
+- **Verified counts:** `pnpm format:check`, `lint`, `typecheck`, `test` (197 unit tests; 15 new, including the architecture test), `test:integration` (128 tests; 10 new in `tests/integration/transaction-authority.test.ts`), `db:generate` (no drift), and `build` all pass. Migration `0013_previous_catseye.sql`.
+- **Stop condition raised and resolved:** the plan cited the ledger model for the sign of `ledger.entries.amount` by account class, but no document defined it. The owner chose the net-worth sign on 2026-09-25 (an account entry is its change in net-worth contribution, for assets and liabilities alike), which is what the YNAB import plan already assumes. It is now in the [ledger model](../architecture/ledger-model.md#entry-sign-convention), and an integration test covers a credit-card account.
+- **Deviations and choices within the plan:**
+  - Reason codes: `window_proposed`, `window_activated`, and for revocation `owner_revoked` or `schedule_replaced`, checked per status. Allowed transitions: `proposed → active`, `proposed → revoked`, `active → revoked`; the root is always `proposed`.
+  - Global lock order: authority window, then canonical account (`ledger.authority_account:` domain), then account source (the existing `lock_account_source`, also taken by RFC 0002 link revisions). Each decision takes at most one lock per domain. The validation functions are `SECURITY DEFINER`, so the runtime role has no `EXECUTE` on the lock functions.
+  - An `import` window may still cite a check; if it does, the check must match and be `passed`.
+  - A check must reference a source currently linked to its account. The provider observation interval is stored as half-open dates (`observation_starts_on`, `observation_ends_on`).
+  - The trigger always computes `ledger_balance` and `difference`, overwriting even owner-supplied values. The runtime role has no `INSERT` privilege on either column. Core reads the same sum first to derive the result; if an entry commits in between, the `CHECK` rejects the insert, so it fails closed.
+  - A check replay returns the recorded evidence without recomputing.
+  - Added `negateAmount`, `subtractAmounts`, and `compareAbsoluteAmounts` to `money.ts`; RFC 0006's conversion now uses `negateAmount`.
+- **Not verified:** nothing runs this service outside tests (no UI, route, or CLI, by design); the migration was applied to the local database, which nothing yet reads.
+- **Follow-ups:**
+  - Reviewed balance policies need a redacted provider fixture and their own unit before any connector window can activate.
+  - RFC 0004 rollout unit three (processing revisions) is the next RFC 0004 unit.
+  - The owner may want the entry sign convention recorded as an RFC 0001 amendment, since RFC 0001 owns accounting semantics; for now it lives in the ledger model.
 
 ## Source handoff (verbatim)
 
