@@ -1,4 +1,5 @@
 export * from "./account-sources";
+export * from "./balance-observations";
 export * from "./destinations";
 export * from "./identifiers";
 export * from "./money";

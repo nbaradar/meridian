@@ -10,8 +10,8 @@ Formerly `PLAN.md` §3, plus standing rules moved from `AGENTS.md`. Accepted RFC
 ## Plane A — `ledger.*`
 
 This is a conceptual inventory, not a migration contract. RFC 0001 defines the
-implemented transaction foundation and RFC 0002 adds canonical account-source
-linkage. In particular, canonical accounts do not store institution identity or
+implemented transaction foundation, RFC 0002 adds canonical account-source
+linkage, and RFC 0006 adds account-level balance observations. In particular, canonical accounts do not store institution identity or
 capabilities; those facts belong to source linkage and a separately reviewed
 operational connection boundary.
 
@@ -27,7 +27,15 @@ transactions        (id, occurred_on, occurred_at, description, origin,
                      source_record_id, corrects_transaction_id, ...)
 entries             (id, transaction_id, account_id, instrument_id,
                      amount NUMERIC, quantity NUMERIC, category_id, ...)
+balance_observations
+                    (id, account_id, observed_on, amount NUMERIC, currency, source,
+                     account_source_id, export_digest, supersedes_observation_id,
+                     recorded_at)                       -- RFC 0006, account level
+balance_observation_retractions
+                    (id, observation_id, recorded_at)  -- RFC 0006
+current_balances    -- view: one winning observation per account (RFC 0006)
 position_snapshots  (id, account_id, instrument_id, quantity, value, observed_at, source)
+                    -- per instrument; Phase 2, separate from balance_observations
 tax_lots            (id, account_id, instrument_id, opened_at, quantity, cost_basis, closed_at)
 categories          (id, parent_id, name, kind)            -- expense / income / transfer
 raw_payloads        (id, source, ingested_at, algorithm, key_id, nonce, ciphertext, digest)

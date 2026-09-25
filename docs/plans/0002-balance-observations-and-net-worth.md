@@ -1,13 +1,14 @@
 ---
-summary: Plan 0002 (Approved): implement RFC 0006 balance observations, manual and YNAB balance entry, corrections, and a net-worth home page
+summary: Plan 0002 (Done): implement RFC 0006 balance observations, manual and YNAB balance entry, corrections, and a net-worth home page
 read_when: Implementing or reviewing balance observations or the net-worth dashboard
 ---
 
 # Plan 0002: Balance observations and net-worth dashboard
 
-- Status: Approved
+- Status: Done
 - Date: 2026-09-25
 - Approved: 2026-09-25
+- Done: 2026-09-25
 - Related RFCs: [RFC 0006](../decisions/0006-balance-observations.md) (the design this plan implements); [RFC 0005](../decisions/0005-ynab-account-persistence.md) and [RFC 0002](../decisions/0002-canonical-account-source-linkage.md) (how a YNAB account resolves to a canonical account)
 - Depends on: none (RFC 0006 accepted 2026-09-25)
 
@@ -86,21 +87,21 @@ None.
 
 ## Acceptance criteria
 
-- [ ] Migration `0012` creates the two tables and the view with every constraint, trigger, and grant in RFC 0006, and changes nothing that already exists. `pnpm db:generate` reports no drift.
-- [ ] `UPDATE`, `DELETE`, and `TRUNCATE` fail on both new tables under the app and owner roles, and the app role cannot set `recorded_at`.
-- [ ] The database rejects, with integration tests for each:
+- [x] Migration `0012` creates the two tables and the view with every constraint, trigger, and grant in RFC 0006, and changes nothing that already exists. `pnpm db:generate` reports no drift.
+- [x] `UPDATE`, `DELETE`, and `TRUNCATE` fail on both new tables under the app and owner roles, and the app role cannot set `recorded_at`.
+- [x] The database rejects, with integration tests for each:
   - a currency that differs from the account's;
   - inconsistent source columns (for `manual` or `ynab_export`);
   - a `ynab_export` row whose source isn't a currently linked YNAB source for that account;
   - a correction of a different account's observation, or of one already superseded or retracted;
   - a second retraction, or a retraction of a superseded observation;
   - a duplicate `(account_source_id, export_digest)`.
-- [ ] `ledger.current_balances` returns the documented winner for date, `recorded_at`, and `id` ties, and excludes superseded and retracted observations.
-- [ ] The service rejects dates after the latest allowed date, and a manual liability entry of amount owed `X` stores `-X`.
-- [ ] Net worth, subtotals, the no-balance list, and closed-account flags match RFC 0006 for fixture portfolios, with no JS `number` anywhere in the calculation.
-- [ ] Saving YNAB balances records the correct amount and date for each eligible account. Future-dated rows are left out and counted. Running it again reports "already saved" for every account. Ineligible accounts are skipped with their reason.
-- [ ] `/` shows net worth, subtotals, and every account, grouped and sorted as decided, with balance, as-of date, source, and age. Recording, correcting, and retracting from `/` update the page.
-- [ ] `/setup` offers the same account and category creation as the old `/`, and `/`, `/setup`, and `/ynab` link to each other.
+- [x] `ledger.current_balances` returns the documented winner for date, `recorded_at`, and `id` ties, and excludes superseded and retracted observations.
+- [x] The service rejects dates after the latest allowed date, and a manual liability entry of amount owed `X` stores `-X`.
+- [x] Net worth, subtotals, the no-balance list, and closed-account flags match RFC 0006 for fixture portfolios, with no JS `number` anywhere in the calculation.
+- [x] Saving YNAB balances records the correct amount and date for each eligible account. Future-dated rows are left out and counted. Running it again reports "already saved" for every account. Ineligible accounts are skipped with their reason.
+- [x] `/` shows net worth, subtotals, and every account, grouped and sorted as decided, with balance, as-of date, source, and age. Recording, correcting, and retracting from `/` update the page.
+- [x] `/setup` offers the same account and category creation as the old `/`, and `/`, `/setup`, and `/ynab` link to each other.
 
 ## Tests required
 
@@ -134,11 +135,11 @@ Then apply the migration to the local database (`pnpm db:migrate`) and check tha
 
 ## Documentation to update
 
-- [ ] [docs/status.md](../status.md) (replace) and [docs/history.md](../history.md) (one entry)
-- [ ] [RFC 0006](../decisions/0006-balance-observations.md): add `Implemented:` with the migration name. Update its row in [decisions/README.md](../decisions/README.md) to "Accepted, implemented".
-- [ ] [ledger model](../architecture/ledger-model.md): add the two tables and the view to the Plane A inventory, and note that `position_snapshots` remain per-instrument Phase 2 work.
-- [ ] [README.md](../../README.md): the net-worth row in "What works today", the move of setup to `/setup`, and a short "Using the current screens" note on recording and correcting balances.
-- [ ] `AGENTS.md`: add RFC 0006 to the "Balances, reconciliation…" routing row.
+- [x] [docs/status.md](../status.md) (replace) and [docs/history.md](../history.md) (one entry)
+- [x] [RFC 0006](../decisions/0006-balance-observations.md): add `Implemented:` with the migration name. Update its row in [decisions/README.md](../decisions/README.md) to "Accepted, implemented".
+- [x] [ledger model](../architecture/ledger-model.md): add the two tables and the view to the Plane A inventory, and note that `position_snapshots` remain per-instrument Phase 2 work.
+- [x] [README.md](../../README.md): the net-worth row in "What works today", the move of setup to `/setup`, and a short "Using the current screens" note on recording and correcting balances.
+- [x] `AGENTS.md`: add RFC 0006 to the "Balances, reconciliation…" routing row.
 
 ## Stop and ask if
 
@@ -150,4 +151,17 @@ Then apply the migration to the local database (`pnpm db:migrate`) and check tha
 
 ## Completion record
 
-When Done: date, verified counts, deviations and why, what was not verified, follow-ups.
+- **Date:** 2026-09-25.
+- **Verified counts:** `pnpm format:check`, `lint`, `typecheck`, `test` (182 unit tests), and `build` pass; `pnpm test:integration` passes 118 tests (12 new in `tests/integration/balance-observations.test.ts`); `pnpm db:generate` reports no drift. Migration `0012_hesitant_johnny_blaze.sql` applied to the local database, and `/`, `/setup`, and `/ynab` render against it (read only).
+- **Browser run-through:** in headless Chromium against a disposable, migrated database with synthetic accounts: recorded a balance (typed `2,000.50`), saw the "Amount owed" label for a liability, had a date past the latest allowed date rejected with its message, corrected a liability (pre-filled amount owed and date), retracted it to "No balance yet", retracted a newer balance so the older one returned, and on `/ynab` saved an export's balance ("Saved −$10.00 as of 2026-08-02"), then saved again ("Already saved"). The database was dropped afterwards. No real balances were recorded in the owner's database.
+- **Deviations:**
+  - Source-column consistency is enforced by a `CHECK` constraint as well as the validation trigger (the trigger mirrors it because `BEFORE` triggers run before `CHECK`s). Two further `CHECK`s were added: `currency = 'USD'`, and a correction's source must be `manual` (RFC 0006 "Corrections").
+  - The validation functions are `SECURITY DEFINER` with a fixed `search_path` (the migration 0009 pattern), so no existing lock function needed a new grant. A `ynab_export` insert also takes the existing account-source lock after the account lock, serializing it with unlinks.
+  - A second retraction is rejected by the trigger with `23505` and by the unique index.
+  - Stop condition "YNAB balance differs from the working balance": the claim equals the `/ynab` working balance whenever no row is future-dated (tested in `tests/ynab-balances.test.ts` and `tests/ynab-actions.test.ts`); it differs only by the future-dated rows RFC 0006 excludes, which are reported per account. Treated as agreement, not a stop.
+  - Added `enteredDecimalAmountSchema` in `money.ts` so typed amounts such as `10.00` or `1,234.50` are canonicalized exactly instead of rejected; stored amounts still use `decimalAmountSchema`.
+  - `YnabReviewSnapshotStore` became generic so the snapshot holds candidates, balance claims, and the register digest; `formatUsd` moved to `src/app/format.ts` for `/` and `/ynab`; `signedAmount` is exported from `import-plan.ts` so claims reuse the working-balance arithmetic.
+- **Not verified:** a real YNAB export; visual layout (the browser run checked page text and behavior, not rendering); browsers other than headless Chromium.
+- **Follow-ups:**
+  - Saving a new YNAB account (RFC 0005 path, not changed here) fails when the host clock is ahead of the Docker PostgreSQL clock: `ingested_at` comes from the app clock and `recorded_at` from the database, violating `account_sources_time_check`. Seen during the browser run with a ~10 ms skew. Documented in README troubleshooting; needs its own fix.
+  - `docs/architecture/ui.md` still calls the setup page "the current manual setup page"; update it when the application shell is designed.

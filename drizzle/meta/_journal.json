@@ -85,6 +85,13 @@
       "when": 1790318610817,
       "tag": "0011_solid_tinkerer",
       "breakpoints": true
+    },
+    {
+      "idx": 12,
+      "version": "7",
+      "when": 1790336135545,
+      "tag": "0012_hesitant_johnny_blaze",
+      "breakpoints": true
     }
   ]
 }

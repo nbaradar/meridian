@@ -19,6 +19,23 @@ export const decimalAmountSchema = z
 
 export type DecimalAmount = z.infer<typeof decimalAmountSchema>;
 
+/**
+ * An amount as a person types it: optional sign, optional thousands commas,
+ * and any number of trailing fraction zeros. Parsed to the canonical form
+ * without rounding.
+ */
+export const enteredDecimalAmountSchema = z
+  .string()
+  .trim()
+  .regex(
+    /^-?(?:\d+|\d{1,3}(?:,\d{3})+)(?:\.\d+)?$/u,
+    "Enter an amount such as 1234.56",
+  )
+  .transform((entered) => {
+    const exact = new Decimal(entered.replaceAll(",", ""));
+    return decimalAmountSchema.parse(exact.isZero() ? "0" : exact.toFixed());
+  });
+
 export function amountsBalance(amounts: readonly DecimalAmount[]): boolean {
   return exactSum(amounts).isZero();
 }

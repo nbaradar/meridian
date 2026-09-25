@@ -12,12 +12,17 @@ import type { AccountType } from "@/core/ledger";
 import type {
   YnabAccountCandidate,
   YnabAccountSaveState,
+  YnabBalanceClaim,
+  YnabBalanceSaveResult,
 } from "@/modules/ynab";
 
+import { formatUsd } from "../format";
 import {
   analyzeYnabExportAction,
   saveYnabAccountsAction,
+  saveYnabBalancesAction,
   type YnabAnalysisActionState,
+  type YnabBalanceSaveActionState,
   type YnabExportAnalysis,
   type YnabRenameTarget,
   type YnabSaveActionState,
@@ -34,6 +39,12 @@ const initialSaveState: YnabSaveActionState = {
   message: "",
   results: {},
   review: null,
+};
+
+const initialBalanceSaveState: YnabBalanceSaveActionState = {
+  status: "idle",
+  message: "",
+  results: {},
 };
 
 const accountTypes: readonly { value: AccountType; label: string }[] = [
@@ -78,15 +89,13 @@ function typeLabel(accountType: AccountType): string {
   return accountType.replace("_", " ");
 }
 
-/** Formats a canonical decimal string for display without converting to a number. */
-function formatUsd(amount: string): string {
-  const negative = amount.startsWith("-");
-  const [integer = "0", fraction = ""] = amount.replace("-", "").split(".");
-  const grouped = integer.replace(/\B(?=(\d{3})+(?!\d))/gu, ",");
-  return `${negative ? "−" : ""}$${grouped}.${fraction.padEnd(2, "0")}`;
-}
-
-function ActivityEvidence({ candidate }: { candidate: YnabAccountCandidate }) {
+function ActivityEvidence({
+  candidate,
+  claim,
+}: {
+  candidate: YnabAccountCandidate;
+  claim: YnabBalanceClaim | undefined;
+}) {
   const { activity } = candidate;
   const referenceRows = activity.transferReferences.reduce(
     (sum, reference) => sum + reference.rowCount,
@@ -101,6 +110,7 @@ function ActivityEvidence({ candidate }: { candidate: YnabAccountCandidate }) {
         {" · "}
         YNAB balance {formatUsd(activity.workingBalance)}
       </p>
+      {claim ? <p>{balanceClaimText(claim)}</p> : null}
       {activity.transferReferences.length > 0 ? (
         <p>
           Transfers from{" "}
@@ -120,6 +130,91 @@ function ActivityEvidence({ candidate }: { candidate: YnabAccountCandidate }) {
         </p>
       ) : null}
     </div>
+  );
+}
+
+function futureRowsNote(count: number): string {
+  return count === 0
+    ? ""
+    : ` · ${count} future-dated ${count === 1 ? "row" : "rows"} not counted`;
+}
+
+function balanceClaimText(claim: YnabBalanceClaim): string {
+  const balance = claim.balance
+    ? `Balance to save ${formatUsd(claim.balance.amount)} as of ${claim.balance.observedOn}`
+    : "No rows to save as a balance";
+  return `${balance}${futureRowsNote(claim.futureRowCount)}`;
+}
+
+function balanceResultText(result: YnabBalanceSaveResult): string {
+  const outcome = (() => {
+    switch (result.status) {
+      case "saved":
+        return `Saved ${formatUsd(result.amount)} as of ${result.observedOn}`;
+      case "already_saved":
+        return "Already saved";
+      case "error":
+        return result.message;
+      case "skipped":
+        return {
+          unsaved: "Skipped: save this account above first",
+          excluded: "Skipped: excluded from the migration",
+          unlinked: "Skipped: its YNAB source is not linked to an account",
+          no_rows: "No rows to save",
+        }[result.reason];
+    }
+  })();
+  return `${outcome}${futureRowsNote(result.futureRowCount)}`;
+}
+
+function BalanceSave({ analysis }: { analysis: YnabExportAnalysis }) {
+  const action = saveYnabBalancesAction.bind(null, analysis.reviewToken);
+  const [state, formAction, pending] = useActionState(
+    action,
+    initialBalanceSaveState,
+  );
+  return (
+    <form action={formAction} className="mapping-form">
+      <div className="mapping-header">
+        <div>
+          <p className="eyebrow">Balances</p>
+          <h2>Save balances from this export</h2>
+        </div>
+        <p>
+          Records each saved, linked account&apos;s YNAB balance as of its
+          latest counted row. Future-dated rows are left out. Saving the same
+          export again changes nothing.
+        </p>
+      </div>
+      {Object.keys(state.results).length > 0 ? (
+        <ul className="balance-results">
+          {analysis.accountCandidates.map((candidate) => {
+            const result = state.results[candidate.sourceName];
+            if (!result) return null;
+            return (
+              <li key={candidate.sourceName}>
+                <span>{candidate.sourceName}</span>
+                <small
+                  className={
+                    result.status === "error" ? "form-message error" : ""
+                  }
+                >
+                  {balanceResultText(result)}
+                </small>
+              </li>
+            );
+          })}
+        </ul>
+      ) : null}
+      <div className="mapping-submit">
+        {state.status !== "idle" && !pending ? (
+          <p className={`form-message ${state.status}`}>{state.message}</p>
+        ) : null}
+        <button disabled={pending} type="submit">
+          {pending ? "Saving…" : "Save balances"}
+        </button>
+      </div>
+    </form>
   );
 }
 
@@ -365,7 +460,12 @@ function MappingForm({ analysis }: { analysis: YnabExportAnalysis }) {
               ) : (
                 <SavedSummary state={saveState} />
               )}
-              <ActivityEvidence candidate={candidate} />
+              <ActivityEvidence
+                candidate={candidate}
+                claim={analysis.balanceClaims.find(
+                  (claim) => claim.sourceName === candidate.sourceName,
+                )}
+              />
               {editable ? (
                 <DecisionFields
                   allowExclude={saveState.status === "unsaved"}
@@ -490,6 +590,10 @@ export function YnabMappingReview() {
           <MappingForm
             analysis={state.analysis}
             key={state.analysis.reviewToken}
+          />
+          <BalanceSave
+            analysis={state.analysis}
+            key={`balances-${state.analysis.reviewToken}`}
           />
         </>
       ) : null}

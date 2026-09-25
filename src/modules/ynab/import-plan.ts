@@ -234,7 +234,8 @@ function destination(row: YnabRegisterRow): YnabPostingDestination {
   };
 }
 
-function signedAmount(row: YnabRegisterRow): DecimalAmount {
+/** A register row's signed amount: inflow positive, outflow negative. */
+export function signedAmount(row: YnabRegisterRow): DecimalAmount {
   return decimalAmountSchema.parse(
     row.outflow === "0" ? row.inflow : `-${row.outflow}`,
   );

@@ -22,7 +22,10 @@ afterEach(() => vi.useRealTimers());
 
 describe("YNAB review snapshots", () => {
   test("evicts the oldest snapshot at the configured bound", () => {
-    const store = new YnabReviewSnapshotStore(60_000, 2);
+    const store = new YnabReviewSnapshotStore<YnabAccountCandidate[]>(
+      60_000,
+      2,
+    );
     const first = store.create([candidate]);
     const second = store.create([candidate]);
     const third = store.create([candidate]);
@@ -34,7 +37,7 @@ describe("YNAB review snapshots", () => {
 
   test("removes private snapshot data when its timer expires", () => {
     vi.useFakeTimers();
-    const store = new YnabReviewSnapshotStore(1_000, 2);
+    const store = new YnabReviewSnapshotStore<YnabAccountCandidate[]>(1_000, 2);
     const token = store.create([candidate]);
 
     vi.advanceTimersByTime(1_000);

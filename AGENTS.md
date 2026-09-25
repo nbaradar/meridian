@@ -14,7 +14,7 @@ Paths are relative to the repository root.
 | YNAB import, account mapping, saved YNAB accounts | `docs/decisions/0002-canonical-account-source-linkage.md`, `docs/decisions/0005-ynab-account-persistence.md`, `docs/architecture/ledger-model.md` |
 | Ledger schema, money, transactions, categories, ingesting external data | `docs/architecture/ledger-model.md` (includes data conventions), `docs/decisions/0001-phase-0-ledger-schema.md`, `docs/architecture/overview.md` |
 | Connectors, sync, discovery, provider credentials, anything institution-specific | `docs/institutions.md` (which can trade, which APIs are forbidden), `docs/decisions/0003-operational-live-connections.md`, `docs/decisions/0004-transaction-source-authority.md` |
-| Balances, reconciliation, transaction authority, YNAB cutover | `docs/decisions/0004-transaction-source-authority.md`, `docs/architecture/overview.md` |
+| Balances, reconciliation, transaction authority, YNAB cutover | `docs/decisions/0006-balance-observations.md`, `docs/decisions/0004-transaction-source-authority.md`, `docs/architecture/overview.md` |
 | Modules, interfaces, where code belongs | `docs/architecture/modules.md` |
 | Keys, secrets, encryption | `docs/architecture/security-and-keys.md` |
 | Execution, orders, strategies, broker credentials, backups, exposure | `docs/architecture/safety.md`, required before touching `src/modules/execution/` |

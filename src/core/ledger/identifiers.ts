@@ -15,6 +15,12 @@ export const accountSourceLinkRevisionIdSchema = z
 export const accountSetRevisionIdSchema = z
   .uuid()
   .brand<"AccountSetRevisionId">();
+export const balanceObservationIdSchema = z
+  .uuid()
+  .brand<"BalanceObservationId">();
+export const balanceObservationRetractionIdSchema = z
+  .uuid()
+  .brand<"BalanceObservationRetractionId">();
 
 export type AccountId = z.infer<typeof accountIdSchema>;
 export type AccountRevisionId = z.infer<typeof accountRevisionIdSchema>;
@@ -29,3 +35,7 @@ export type AccountSourceLinkRevisionId = z.infer<
   typeof accountSourceLinkRevisionIdSchema
 >;
 export type AccountSetRevisionId = z.infer<typeof accountSetRevisionIdSchema>;
+export type BalanceObservationId = z.infer<typeof balanceObservationIdSchema>;
+export type BalanceObservationRetractionId = z.infer<
+  typeof balanceObservationRetractionIdSchema
+>;

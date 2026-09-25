@@ -142,3 +142,14 @@ The repository became public as a fresh single-commit history; the earlier priva
 ## 2026-09-25 — Workflow skills moved to per-user installs
 
 `/project-status`, `/plan-unit`, and `/implement-plan` were removed from `.claude/skills/`. They now live, generic, in the `doc-routed-agentic-coding` repository and are installed once per user, symlinked into `~/.claude/skills/`, so one copy serves every project. The workflow's rules stay in `AGENTS.md`, which now describes the skills as optional and states that a plan is Approved only with the owner's explicit approval.
+
+## 2026-09-25 — Balance observations and net worth (Plan 0002)
+
+[RFC 0006](decisions/0006-balance-observations.md) implemented by migration `0012_hesitant_johnny_blaze.sql`: append-only `ledger.balance_observations` and `ledger.balance_observation_retractions`, and the security-invoker view `ledger.current_balances` (latest `observed_on`, then `recorded_at`, then `id`, excluding superseded and retracted observations).
+
+- `src/core/ledger/balance-observations.ts` holds the commands, the amount-owed conversion, the latest-allowed-date rule (server UTC date plus one day), the service, and the `decimal.js` net-worth calculation. Typed amounts such as `1,234.50` are canonicalized without rounding (`enteredDecimalAmountSchema` in `money.ts`).
+- SQL enforces currency, source-column consistency, currently linked YNAB sources, same-account corrections of the chain tip, one retraction per observation, `(account_source_id, export_digest)` uniqueness, append-only and `TRUNCATE` rejection, and server-owned `recorded_at`, serialized by a per-account advisory lock.
+- `src/modules/ynab/balances.ts` builds per-account claims at analyze time (future-dated rows excluded and counted) and the register digest; `/ynab` "Save balances" records them for tracked, linked accounts, and a replay reports "already saved".
+- `/` is the net-worth dashboard with record, correct, and retract; the old home page moved unchanged to `/setup`.
+
+Verified: 182 unit and 118 integration tests across thirteen migrations, no schema drift, and the migration applied to the local database with `/`, `/setup`, and `/ynab` rendering. Recording, correcting, retracting, and saving YNAB balances were exercised in headless Chromium against a disposable database with synthetic data; no real balances were recorded.

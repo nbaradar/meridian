@@ -1,105 +1,197 @@
-import {
-  createLedgerDestinationService,
-  utcTimestampSchema,
-} from "@/core/ledger";
 import Link from "next/link";
-import { createDatabase } from "@/infrastructure/database/client";
-import { createPostgresLedgerDestinationStore } from "@/infrastructure/database/postgres-ledger-destinations";
 
-import { AccountForm, CategoryForm } from "./manual/manual-entry-forms";
+import {
+  createBalanceObservationService,
+  entryAmountFromBalance,
+  utcTimestampSchema,
+  type AccountType,
+  type BalanceObservationSource,
+  type DashboardAccount,
+  type DecimalAmount,
+} from "@/core/ledger";
+import { createDatabase } from "@/infrastructure/database/client";
+import { createPostgresBalanceObservationStore } from "@/infrastructure/database/postgres-balance-observations";
+
+import {
+  CurrentBalanceActions,
+  RecordBalanceForm,
+} from "./balances/balance-forms";
+import { formatUsd } from "./format";
 
 export const dynamic = "force-dynamic";
 
-async function loadDestinations() {
+async function loadDashboard() {
   const connection = createDatabase();
   try {
-    const store = createPostgresLedgerDestinationStore(connection.database);
-    const service = createLedgerDestinationService(store, () =>
-      utcTimestampSchema.parse(new Date().toISOString()),
+    const service = createBalanceObservationService(
+      createPostgresBalanceObservationStore(connection.database),
+      () => utcTimestampSchema.parse(new Date().toISOString()),
     );
-    const [accounts, categories] = await Promise.all([
-      service.listAccounts(),
-      service.listCategories(),
-    ]);
-    return { accounts, categories };
+    return await service.dashboard();
   } finally {
     await connection.close();
   }
 }
 
-export default async function Home() {
-  const { accounts, categories } = await loadDestinations();
+const typeLabels: Readonly<Record<AccountType, string>> = {
+  checking: "Checking",
+  savings: "Savings",
+  cash: "Cash",
+  credit_card: "Credit cards",
+  loan: "Loans",
+  mortgage: "Mortgages",
+  brokerage: "Brokerage",
+  retirement: "Retirement",
+  crypto: "Crypto",
+  other: "Other",
+};
+
+const sourceLabels: Readonly<Record<BalanceObservationSource, string>> = {
+  manual: "Manual",
+  ynab_export: "YNAB export",
+};
+
+/** Liabilities read as an amount owed; a negative owed amount is a credit. */
+function owedText(amount: DecimalAmount): string {
+  const owed = entryAmountFromBalance("liability", amount);
+  return owed.startsWith("-")
+    ? `${formatUsd(owed.slice(1))} credit`
+    : `${formatUsd(owed)} owed`;
+}
+
+function ageText(ageDays: number): string {
+  if (ageDays <= 0) return "today";
+  return ageDays === 1 ? "1 day old" : `${ageDays} days old`;
+}
+
+function AccountRow({
+  item,
+  latestAllowedDate,
+}: Readonly<{ item: DashboardAccount; latestAllowedDate: string }>) {
+  const { account, balance } = item;
+  const closed = account.status === "closed";
+  return (
+    <li className={closed ? "balance-row closed" : "balance-row"}>
+      <div className="balance-main">
+        <span>
+          {account.name}
+          {closed ? <small> · closed</small> : null}
+        </span>
+        <strong>
+          {balance === null
+            ? "No balance yet"
+            : account.accountClass === "liability"
+              ? owedText(balance.amount)
+              : formatUsd(balance.amount)}
+        </strong>
+      </div>
+      {balance ? (
+        <p className="balance-meta">
+          As of {balance.observedOn} · {sourceLabels[balance.source]} ·{" "}
+          {ageText(item.ageDays ?? 0)}
+          {item.flaggedClosed ? (
+            <span className="balance-flag">
+              {" "}
+              · Closed with a nonzero balance; not counted
+            </span>
+          ) : null}
+        </p>
+      ) : null}
+      {balance ? (
+        <CurrentBalanceActions
+          accountClass={account.accountClass}
+          accountId={account.id}
+          entryAmount={entryAmountFromBalance(
+            account.accountClass,
+            balance.amount,
+          )}
+          key={balance.observationId}
+          latestAllowedDate={latestAllowedDate}
+          observationId={balance.observationId}
+          observedOn={balance.observedOn}
+        />
+      ) : null}
+    </li>
+  );
+}
+
+export default async function NetWorthPage() {
+  const dashboard = await loadDashboard();
+  const { netWorth } = dashboard;
+  const accounts = dashboard.groups.flatMap((group) => group.accounts);
 
   return (
     <main>
       <header className="masthead">
         <div>
-          <p className="eyebrow">Meridian / Manual setup</p>
+          <p className="eyebrow">Meridian / Net worth</p>
+          <h1>{formatUsd(netWorth.netWorth)}</h1>
         </div>
         <div className="status-block">
-          <span>Phase 0</span>
-          <strong>Offline destinations</strong>
-          <p>For imports and accounts without live connections.</p>
+          <span>Assets {formatUsd(netWorth.assets)}</span>
+          <strong>Liabilities {owedText(netWorth.liabilities)}</strong>
+          <p>
+            {netWorth.included.length} of {accounts.length} accounts counted.
+            {netWorth.withoutBalance.length > 0
+              ? ` ${netWorth.withoutBalance.length} active ${netWorth.withoutBalance.length === 1 ? "account has" : "accounts have"} no balance yet.`
+              : ""}
+            {netWorth.closedWithBalance.length > 0
+              ? ` ${netWorth.closedWithBalance.length} closed ${netWorth.closedWithBalance.length === 1 ? "account has" : "accounts have"} a nonzero balance.`
+              : ""}
+          </p>
         </div>
       </header>
 
-      <Link className="workflow-link" href="/ynab">
-        <span>YNAB migration</span>
-        <strong>Analyze exports and review account mappings →</strong>
-      </Link>
+      <nav className="page-links" aria-label="Pages">
+        <Link className="text-link" href="/setup">
+          Setup
+        </Link>
+        <Link className="text-link" href="/ynab">
+          YNAB migration
+        </Link>
+      </nav>
 
-      <section className="forms-grid" aria-label="Manual ledger setup">
-        <AccountForm />
-        <CategoryForm categories={categories} />
+      <section className="forms-grid single" aria-label="Record a balance">
+        <RecordBalanceForm
+          accounts={accounts.map(({ account }) => ({
+            id: account.id,
+            name: account.name,
+            accountClass: account.accountClass,
+          }))}
+          latestAllowedDate={dashboard.latestAllowedDate}
+        />
       </section>
 
-      <section
-        className="ledger-index"
-        aria-label="Current ledger destinations"
-      >
-        <div className="index-heading">
-          <p className="eyebrow">Current index</p>
-          <h2>{accounts.length + categories.length} destinations</h2>
-        </div>
-        <div className="index-columns">
-          <div>
-            <h3>
-              Accounts <span>{accounts.length}</span>
-            </h3>
-            {accounts.length === 0 ? (
-              <p className="empty-copy">No accounts recorded yet.</p>
-            ) : (
-              <ul>
-                {accounts.map((account) => (
-                  <li key={account.id}>
-                    <span>{account.name}</span>
-                    <small>
-                      {account.accountType.replace("_", " ")} /{" "}
-                      {account.currency}
-                    </small>
-                  </li>
-                ))}
-              </ul>
-            )}
-          </div>
-          <div>
-            <h3>
-              Categories <span>{categories.length}</span>
-            </h3>
-            {categories.length === 0 ? (
-              <p className="empty-copy">No categories recorded yet.</p>
-            ) : (
-              <ul>
-                {categories.map((category) => (
-                  <li key={category.id}>
-                    <span>{category.name}</span>
-                    <small>{category.kind}</small>
-                  </li>
-                ))}
-              </ul>
-            )}
-          </div>
-        </div>
+      <section className="balance-groups" aria-label="Accounts">
+        {dashboard.groups.length === 0 ? (
+          <p className="empty-copy">
+            No accounts yet. Create one in <Link href="/setup">setup</Link> or
+            save them from a <Link href="/ynab">YNAB export</Link>.
+          </p>
+        ) : (
+          dashboard.groups.map((group) => (
+            <div
+              className="index-columns balance-group"
+              key={group.accountType}
+            >
+              <div>
+                <h3>
+                  {typeLabels[group.accountType]}{" "}
+                  <span>{group.accounts.length}</span>
+                </h3>
+                <ul>
+                  {group.accounts.map((item) => (
+                    <AccountRow
+                      item={item}
+                      key={item.account.id}
+                      latestAllowedDate={dashboard.latestAllowedDate}
+                    />
+                  ))}
+                </ul>
+              </div>
+            </div>
+          ))
+        )}
       </section>
     </main>
   );

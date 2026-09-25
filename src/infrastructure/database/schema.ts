@@ -224,6 +224,97 @@ export const ynabAccountDecisions = ledger.table(
   ],
 );
 
+// RFC 0006: account-level balance claims. `amount` is the account's
+// contribution to net worth. Clock-dependent and cross-row rules live in the
+// validation trigger (migration 0012), not here.
+export const balanceObservations = ledger.table(
+  "balance_observations",
+  {
+    id: uuid("id").primaryKey(),
+    accountId: uuid("account_id").notNull(),
+    observedOn: date("observed_on", { mode: "string" }).notNull(),
+    amount: numeric("amount").notNull(),
+    currency: char("currency", { length: 3 }).notNull(),
+    source: text("source").notNull(),
+    accountSourceId: uuid("account_source_id"),
+    exportDigest: char("export_digest", { length: 64 }),
+    supersedesObservationId: uuid("supersedes_observation_id"),
+    recordedAt: recordedAt(),
+  },
+  (table) => [
+    foreignKey({
+      name: "balance_observations_account_fk",
+      columns: [table.accountId],
+      foreignColumns: [accounts.id],
+    }),
+    foreignKey({
+      name: "balance_observations_source_fk",
+      columns: [table.accountSourceId],
+      foreignColumns: [accountSources.id],
+    }),
+    foreignKey({
+      name: "balance_observations_predecessor_fk",
+      columns: [table.supersedesObservationId],
+      foreignColumns: [table.id],
+    }),
+    check(
+      "balance_observations_currency_check",
+      sql`${table.currency} = 'USD'`,
+    ),
+    check(
+      "balance_observations_source_check",
+      sql`${table.source} in ('manual', 'ynab_export')`,
+    ),
+    check(
+      "balance_observations_source_columns_check",
+      sql`(${table.source} = 'manual' and ${table.accountSourceId} is null and ${table.exportDigest} is null)
+        or (${table.source} = 'ynab_export' and ${table.accountSourceId} is not null and ${table.exportDigest} is not null)`,
+    ),
+    check(
+      "balance_observations_digest_check",
+      sql`${table.exportDigest} is null or ${table.exportDigest} ~ '^[0-9a-f]{64}$'`,
+    ),
+    check(
+      "balance_observations_correction_source_check",
+      sql`${table.supersedesObservationId} is null or ${table.source} = 'manual'`,
+    ),
+    check(
+      "balance_observations_not_self_check",
+      sql`${table.supersedesObservationId} is null or ${table.supersedesObservationId} <> ${table.id}`,
+    ),
+    uniqueIndex("balance_observations_supersedes_unique").on(
+      table.supersedesObservationId,
+    ),
+    uniqueIndex("balance_observations_export_unique").on(
+      table.accountSourceId,
+      table.exportDigest,
+    ),
+    index("balance_observations_account_idx").on(
+      table.accountId,
+      table.observedOn,
+    ),
+  ],
+);
+
+export const balanceObservationRetractions = ledger.table(
+  "balance_observation_retractions",
+  {
+    id: uuid("id").primaryKey(),
+    observationId: uuid("observation_id").notNull(),
+    recordedAt: recordedAt(),
+  },
+  (table) => [
+    foreignKey({
+      name: "balance_observation_retractions_observation_fk",
+      columns: [table.observationId],
+      foreignColumns: [balanceObservations.id],
+    }),
+    uniqueIndex("balance_observation_retractions_observation_unique").on(
+      table.observationId,
+    ),
+  ],
+);
+
 export const categories = ledger.table(
   "categories",
   {

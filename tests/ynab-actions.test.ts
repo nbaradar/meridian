@@ -4,6 +4,10 @@ import { readFile } from "node:fs/promises";
 import { beforeEach, describe, expect, test, vi } from "vitest";
 
 import type {
+  BalanceObservationStore,
+  NewBalanceObservation,
+} from "../src/core/ledger";
+import type {
   CurrentYnabAccountDecision,
   YnabAccountDecisionStore,
 } from "../src/modules/ynab";
@@ -15,6 +19,33 @@ const storeMocks = vi.hoisted(() => ({
   listAccounts: vi.fn(async () => []),
   listCategories: vi.fn(async () => []),
   decisions: [] as CurrentYnabAccountDecision[],
+  balances: [] as NewBalanceObservation[],
+}));
+
+vi.mock("next/cache", () => ({ revalidatePath: vi.fn() }));
+
+// In-memory balance store; SQL rules are covered by the integration suite.
+vi.mock("@/infrastructure/database/postgres-balance-observations", () => ({
+  createPostgresBalanceObservationStore: (): BalanceObservationStore => ({
+    findAccount: async () => null,
+    listAccounts: async () => [],
+    listCurrentBalances: async () => [],
+    recordObservation: async () => undefined,
+    async recordYnabObservation(observation) {
+      if (
+        storeMocks.balances.some(
+          (existing) =>
+            existing.accountSourceId === observation.accountSourceId &&
+            existing.exportDigest === observation.exportDigest,
+        )
+      ) {
+        return "already_saved";
+      }
+      storeMocks.balances.push(observation);
+      return "recorded";
+    },
+    retractObservation: async () => undefined,
+  }),
 }));
 
 vi.mock("@/infrastructure/database/client", () => ({
@@ -83,6 +114,7 @@ vi.mock("@/infrastructure/database/postgres-ynab-account-decisions", () => ({
 import {
   analyzeYnabExportAction,
   saveYnabAccountsAction,
+  saveYnabBalancesAction,
   type YnabAnalysisActionState,
   type YnabSaveActionState,
 } from "../src/app/ynab/actions";
@@ -119,6 +151,7 @@ describe("YNAB web actions", () => {
   beforeEach(() => {
     vi.clearAllMocks();
     storeMocks.decisions = [];
+    storeMocks.balances = [];
     vi.stubEnv("YNAB_LABEL_DIGEST_CURRENT_KEY_ID", "test-v1");
     vi.stubEnv(
       "YNAB_LABEL_DIGEST_KEYRING",
@@ -271,5 +304,55 @@ describe("YNAB web actions", () => {
     expect(
       Object.values(reanalyzed.saveStates).map((state) => state.status),
     ).toEqual(["tracked", "tracked", "tracked"]);
+  });
+
+  test("saves balances for tracked accounts once per export", async () => {
+    const analysis = await analyzeFixture();
+    const wallet = analysis.balanceClaims.find(
+      (claim) => claim.sourceName === "Wallet",
+    );
+    const walletActivity = analysis.accountCandidates.find(
+      (candidate) => candidate.sourceName === "Wallet",
+    )!.activity;
+    expect(wallet).toEqual({
+      sourceName: "Wallet",
+      balance: {
+        amount: walletActivity.workingBalance,
+        observedOn: walletActivity.lastOccurredOn,
+      },
+      futureRowCount: 0,
+    });
+
+    const index = analysis.accountCandidates.findIndex(
+      (candidate) => candidate.sourceName === "Wallet",
+    );
+    const single = new FormData();
+    single.set("intent", `row-${index}`);
+    single.set(`action-${index}`, "create");
+    single.set(`name-${index}`, "Wallet");
+    single.set(`accountType-${index}`, "cash");
+    await saveYnabAccountsAction(analysis.reviewToken, idleSave, single);
+
+    const first = await saveYnabBalancesAction(analysis.reviewToken);
+    expect(first).toMatchObject({
+      status: "success",
+      message: "1 balance saved, 2 skipped.",
+      results: {
+        Wallet: { status: "saved", ...wallet!.balance },
+        "Example Card": { status: "skipped", reason: "unsaved" },
+        "Example Checking": { status: "skipped", reason: "unsaved" },
+      },
+    });
+    expect(storeMocks.balances).toHaveLength(1);
+
+    const second = await saveYnabBalancesAction(analysis.reviewToken);
+    expect(second.message).toBe(
+      "0 balances saved, 1 already saved, 2 skipped.",
+    );
+    expect(second.results.Wallet).toEqual({
+      status: "already_saved",
+      futureRowCount: 0,
+    });
+    expect(storeMocks.balances).toHaveLength(1);
   });
 });

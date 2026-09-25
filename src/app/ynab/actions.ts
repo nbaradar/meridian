@@ -2,16 +2,22 @@
 
 import { randomUUID } from "node:crypto";
 
+import { revalidatePath } from "next/cache";
 import { z } from "zod";
 
 import {
   AccountSourceConflictError,
   AccountSourceReferenceError,
+  createBalanceObservationService,
   createLedgerDestinationService,
+  latestAllowedObservationDate,
+  sha256DigestSchema,
   utcTimestampSchema,
+  type BalanceObservationService,
   type CurrentAccount,
 } from "@/core/ledger";
 import { createDatabase } from "@/infrastructure/database/client";
+import { createPostgresBalanceObservationStore } from "@/infrastructure/database/postgres-balance-observations";
 import { createPostgresLedgerDestinationStore } from "@/infrastructure/database/postgres-ledger-destinations";
 import { createPostgresYnabAccountDecisionStore } from "@/infrastructure/database/postgres-ynab-account-decisions";
 import { createYnabLabelDigester } from "@/infrastructure/ynab/label-digest";
@@ -19,15 +25,21 @@ import {
   createYnabAccountDecisionService,
   parseYnabPlanCsv,
   parseYnabRegisterCsv,
+  planYnabBalanceClaims,
   planYnabImport,
   resolveYnabAccountDecision,
+  saveYnabBalances,
   YnabAccountAlreadyDecidedError,
   ynabAccountCandidateSchema,
   YnabAccountMappingError,
+  ynabBalanceClaimSchema,
+  ynabExportDigest,
   type TrackedAccountSummary,
   type YnabAccountCandidate,
   type YnabAccountDecisionService,
   type YnabAccountSaveState,
+  type YnabBalanceClaim,
+  type YnabBalanceSaveResult,
 } from "@/modules/ynab";
 
 import { YnabReviewSnapshotStore } from "./review-snapshots";
@@ -35,7 +47,14 @@ import { YnabReviewSnapshotStore } from "./review-snapshots";
 const maximumExportBytes = 2 * 1024 * 1024;
 const reviewLifetimeMilliseconds = 30 * 60 * 1000;
 const reviewTokenSchema = z.uuid();
-const reviewSnapshots = new YnabReviewSnapshotStore(
+const reviewSnapshotSchema = z.strictObject({
+  candidates: z.array(ynabAccountCandidateSchema),
+  balanceClaims: z.array(ynabBalanceClaimSchema),
+  /** SHA-256 of the register file's bytes, the RFC 0006 idempotency key. */
+  exportDigest: sha256DigestSchema,
+});
+type YnabReviewSnapshot = z.infer<typeof reviewSnapshotSchema>;
+const reviewSnapshots = new YnabReviewSnapshotStore<YnabReviewSnapshot>(
   reviewLifetimeMilliseconds,
   10,
 );
@@ -56,6 +75,8 @@ export interface YnabReviewStatus {
 export interface YnabExportAnalysis extends YnabReviewStatus {
   reviewToken: string;
   accountCandidates: readonly YnabAccountCandidate[];
+  /** RFC 0006 balance per account, excluding future-dated rows. */
+  balanceClaims: readonly YnabBalanceClaim[];
   planRowCount: number;
   registerRowCount: number;
   categoryCount: number;
@@ -81,15 +102,22 @@ export interface YnabSaveActionState {
   review: YnabReviewStatus | null;
 }
 
-function reviewSnapshot(tokenInput: unknown): readonly YnabAccountCandidate[] {
+export interface YnabBalanceSaveActionState {
+  status: "idle" | "success" | "error";
+  message: string;
+  /** Outcome per YNAB account name. */
+  results: Readonly<Record<string, YnabBalanceSaveResult>>;
+}
+
+function reviewSnapshot(tokenInput: unknown): YnabReviewSnapshot {
   const token = reviewTokenSchema.parse(tokenInput);
-  const candidates = reviewSnapshots.get(token);
-  if (!candidates) {
+  const snapshot = reviewSnapshots.get(token);
+  if (!snapshot) {
     throw new YnabAccountMappingError(
       "This YNAB review expired. Analyze the export again.",
     );
   }
-  return z.array(ynabAccountCandidateSchema).parse(candidates);
+  return reviewSnapshotSchema.parse(snapshot);
 }
 
 function exportFile(formData: FormData, name: string): File {
@@ -112,6 +140,7 @@ function now() {
 async function withServices<T>(
   run: (services: {
     decisions: YnabAccountDecisionService;
+    balances: BalanceObservationService;
     listAccounts: () => Promise<readonly CurrentAccount[]>;
   }) => Promise<T>,
 ): Promise<T> {
@@ -128,8 +157,13 @@ async function withServices<T>(
       now,
       randomUUID,
     );
+    const balances = createBalanceObservationService(
+      createPostgresBalanceObservationStore(connection.database),
+      now,
+    );
     return await run({
       decisions,
+      balances,
       listAccounts: () => destinations.listAccounts(),
     });
   } finally {
@@ -191,10 +225,19 @@ export async function analyzeYnabExportAction(
     const planRows = parseYnabPlanCsv(new Uint8Array(planBytes));
     const registerRows = parseYnabRegisterCsv(new Uint8Array(registerBytes));
     const plan = planYnabImport(planRows, registerRows);
+    const balanceClaims = planYnabBalanceClaims(
+      plan.accounts.map((account) => account.sourceName),
+      registerRows,
+      latestAllowedObservationDate(now()),
+    );
     const status = await withServices((services) =>
       reviewStatus(plan.accounts, services),
     );
-    const reviewToken = reviewSnapshots.create(plan.accounts);
+    const reviewToken = reviewSnapshots.create({
+      candidates: [...plan.accounts],
+      balanceClaims,
+      exportDigest: ynabExportDigest(new Uint8Array(registerBytes)),
+    });
     const savedCount = Object.values(status.saveStates).filter(
       (state) => state.status !== "unsaved",
     ).length;
@@ -207,6 +250,7 @@ export async function analyzeYnabExportAction(
       analysis: {
         reviewToken,
         accountCandidates: plan.accounts,
+        balanceClaims,
         ...status,
         planRowCount: planRows.length,
         registerRowCount: registerRows.length,
@@ -315,7 +359,7 @@ export async function saveYnabAccountsAction(
   let candidates: readonly YnabAccountCandidate[];
   let intent: string;
   try {
-    candidates = reviewSnapshot(reviewToken);
+    candidates = reviewSnapshot(reviewToken).candidates;
     intent = intentSchema.parse(formData.get("intent"));
   } catch (error) {
     return {
@@ -447,6 +491,71 @@ export async function saveYnabAccountsAction(
         "Saving failed. Nothing further was saved.",
       results: {},
       review: null,
+    };
+  }
+}
+
+/**
+ * RFC 0006: saves the export's balance for every account in it that is saved
+ * as tracked and currently linked. Each account saves on its own; saving the
+ * same export again reports "already saved".
+ */
+export async function saveYnabBalancesAction(
+  reviewToken: unknown,
+): Promise<YnabBalanceSaveActionState> {
+  let snapshot: YnabReviewSnapshot;
+  try {
+    snapshot = reviewSnapshot(reviewToken);
+  } catch (error) {
+    return {
+      status: "error",
+      message:
+        error instanceof YnabAccountMappingError
+          ? error.message
+          : "The save request is invalid.",
+      results: {},
+    };
+  }
+
+  try {
+    return await withServices(async (services) => {
+      const saveStates = await services.decisions.lookup(
+        snapshot.candidates.map((candidate) => candidate.sourceName),
+      );
+      const results = await saveYnabBalances({
+        claims: snapshot.balanceClaims,
+        exportDigest: snapshot.exportDigest,
+        saveStates,
+        recordYnabBalance: (command) =>
+          services.balances.recordYnabBalance(command),
+        newId: randomUUID,
+      });
+      revalidatePath("/");
+      const outcomes = [...results.values()];
+      const count = (status: YnabBalanceSaveResult["status"]) =>
+        outcomes.filter((outcome) => outcome.status === status).length;
+      const failed = count("error");
+      const parts = [
+        `${count("saved")} ${count("saved") === 1 ? "balance" : "balances"} saved`,
+        ...(count("already_saved") > 0
+          ? [`${count("already_saved")} already saved`]
+          : []),
+        ...(count("skipped") > 0 ? [`${count("skipped")} skipped`] : []),
+        ...(failed > 0 ? [`${failed} need attention`] : []),
+      ];
+      return {
+        status: failed > 0 ? "error" : "success",
+        message: `${parts.join(", ")}.`,
+        results: Object.fromEntries(results),
+      };
+    });
+  } catch (error) {
+    return {
+      status: "error",
+      message:
+        configurationMessage(error) ??
+        "Saving balances failed. Balances already saved were kept.",
+      results: {},
     };
   }
 }

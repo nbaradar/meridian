@@ -519,6 +519,106 @@ button.secondary:hover:not(:disabled) {
   padding-top: 1.5rem;
 }
 
+.page-links {
+  display: flex;
+  gap: 1.5rem;
+}
+
+.forms-grid.single {
+  grid-template-columns: minmax(0, 1fr);
+}
+
+.balance-groups {
+  display: grid;
+  gap: 2.5rem;
+  margin-top: 3rem;
+}
+
+.balance-group {
+  grid-template-columns: minmax(0, 1fr);
+}
+
+.index-columns li.balance-row {
+  display: grid;
+  gap: 0.4rem;
+  justify-content: stretch;
+}
+
+.balance-main {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 1rem;
+}
+
+.balance-main > span {
+  font-family: Georgia, serif;
+  font-size: 1.05rem;
+}
+
+.balance-main strong {
+  color: #d8a94d;
+  font-family: Georgia, serif;
+  font-weight: 400;
+}
+
+.balance-row.closed .balance-main > span {
+  color: #8a968f;
+}
+
+.balance-meta {
+  margin: 0;
+  color: #91a098;
+  font-size: 0.75rem;
+}
+
+.balance-flag {
+  color: #e6c27a;
+}
+
+.balance-actions {
+  display: grid;
+  gap: 0.5rem;
+}
+
+.balance-buttons,
+.balance-correction {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: end;
+  gap: 0.6rem;
+}
+
+.balance-buttons button,
+.balance-correction button {
+  padding: 0.5rem 0.75rem;
+  font-size: 0.68rem;
+}
+
+.balance-correction label {
+  flex: 1 1 10rem;
+}
+
+.balance-results {
+  margin: 0 0 1rem;
+  padding: 0;
+  border: 1px solid #324039;
+  list-style: none;
+}
+
+.balance-results li {
+  display: flex;
+  justify-content: space-between;
+  gap: 1rem;
+  padding: 0.75rem 1rem;
+  border-bottom: 1px solid #202b26;
+  background: #111815;
+}
+
+.balance-results small {
+  color: #a9b5ae;
+}
+
 @media (max-width: 800px) {
   main {
     width: min(100% - 1.5rem, 42rem);

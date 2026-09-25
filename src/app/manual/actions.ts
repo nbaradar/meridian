@@ -79,6 +79,7 @@ export async function createAccountAction(
         openedOn: openedOn === "" ? null : openedOn,
       }),
     );
+    revalidatePath("/setup");
     revalidatePath("/");
     return { status: "success", message: "Account created." };
   } catch (error) {
@@ -101,6 +102,7 @@ export async function createCategoryAction(
         parentCategoryId: parentCategoryId === "" ? null : parentCategoryId,
       }),
     );
+    revalidatePath("/setup");
     revalidatePath("/");
     return { status: "success", message: "Category created." };
   } catch (error) {

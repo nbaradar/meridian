@@ -13,17 +13,22 @@ export default function YnabImportReviewPage() {
           <h1>Review each account. Save when ready.</h1>
         </div>
         <div className="status-block">
-          <span>Accounts only</span>
+          <span>Accounts and balances</span>
           <strong>Account mapping</strong>
           <p>
-            Saving creates or links Meridian accounts. Transactions and balances
-            are not imported yet.
+            Saving creates or links Meridian accounts and can record their
+            balances. Transactions are not imported yet.
           </p>
         </div>
       </header>
-      <Link className="text-link" href="/">
-        Back to manual setup
-      </Link>
+      <nav className="page-links" aria-label="Pages">
+        <Link className="text-link" href="/">
+          Net worth
+        </Link>
+        <Link className="text-link" href="/setup">
+          Setup
+        </Link>
+      </nav>
       <YnabMappingReview />
     </main>
   );
