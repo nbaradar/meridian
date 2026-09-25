@@ -138,7 +138,7 @@ function accountSuggestion(
   if (/\bcrypto\b/u.test(normalized)) {
     return { suggestedType: "crypto", suggestionReason: "account name" };
   }
-  if (normalized.includes("cash/paper")) {
+  if (/\bcash\b(?!\s*back)/u.test(normalized)) {
     return { suggestedType: "cash", suggestionReason: "account name" };
   }
   return { suggestedType: null, suggestionReason: null };

@@ -71,13 +71,13 @@ libsodium XChaCha20-Poly1305 with a fresh random 24-byte nonce per payload and a
 
 - `plan.csv` supplies category groups/categories and credit-card evidence; Assigned, Activity, and Available are envelope data and never enter the domain.
 - `register.csv` dates parse as MM/DD/YYYY calendar dates; dollar strings canonicalize directly, with no JavaScript number or limited-precision arithmetic.
-- Account-type suggestions are advisory: explicit checking, savings, `Cash/Paper`, brokerage, IRA/401(k)/403(b)/457(b)/retirement, crypto, RSU (confirm vested only), and bare Robinhood names, plus Credit Card Payments evidence. Ambiguous containers stay unclassified.
+- Account-type suggestions are advisory: explicit checking, savings, cash, brokerage, IRA/401(k)/403(b)/457(b)/retirement, crypto, RSU (confirm vested only), and bare Robinhood names, plus Credit Card Payments evidence. Ambiguous containers stay unclassified.
 - Explicit `Transfer :` payees and Credit Card Payments use Transfer Clearing with no amount/date pairing heuristics, so every source record stays auditable. Starting balances go to Opening Balance Equity; manual and reconciliation adjustments to Balance Adjustment; blank categories to Uncategorized Expense or Income by amount side; zero-dollar rows become ignored provenance, never transaction candidates.
 - The CSV boundary rejects invalid UTF-8, missing or changed headers, inconsistent category columns, negative register sides, and simultaneous inflow and outflow.
 - Replay identity is account/date/amount plus a duplicate ordinal; full-row SHA-256 digests catch other changes. Since YNAB has no stable transaction ID, later exports go through a change review: reordered exact rows are unchanged; one-to-one metadata changes or a single account/date/amount change are suggested corrections; ambiguous matches stay available for manual pairing; every changed row needs an explicit add, remove, or correct-and-replace decision. Nothing writes automatically.
 - Golden fixtures are synthetic and redacted; the private export directory is gitignored.
 
-Fail-closed validation of the real export: 454 plan rows and 2,590 register rows, giving 18 source accounts, 44 categories, 17 starting balances, 9 balance adjustments, 68 transfer rows, and 5 ignored zero-dollar rows; no split marker. Verified with 86 unit and 64 integration tests.
+The owner's real export validated fail-closed with no split marker. Verified with 86 unit and 64 integration tests.
 
 ## 2026-08-03 — YNAB account mapping validation and dry-run review
 

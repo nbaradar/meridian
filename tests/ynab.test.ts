@@ -191,7 +191,8 @@ describe("YNAB import planning", () => {
       planYnabImport(
         [],
         [
-          { ...registerRows[0]!, account: "Cash/Paper Bills" },
+          { ...registerRows[0]!, account: "Cash on Hand" },
+          { ...registerRows[0]!, account: "Cash Back Rewards" },
           { ...registerRows[0]!, account: "Example Brokerage" },
           { ...registerRows[0]!, account: "Employer Retirement Plan" },
           { ...registerRows[0]!, account: "Employer Savings Retirement Plan" },
@@ -205,7 +206,12 @@ describe("YNAB import planning", () => {
     );
     expect(namedAccounts).toEqual([
       {
-        sourceName: "Cash/Paper Bills",
+        sourceName: "Cash Back Rewards",
+        suggestedType: null,
+        suggestionReason: null,
+      },
+      {
+        sourceName: "Cash on Hand",
         suggestedType: "cash",
         suggestionReason: "account name",
       },
