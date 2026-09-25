@@ -27,5 +27,5 @@ Net worth before transaction authority: balances are observations separate from 
 ## Plans ([index](plans/README.md))
 
 - **In progress:** none.
-- **Next to design:** balance observations (step 2): RFC first, then a plan.
+- **Next to implement:** [Plan 0002](plans/0002-balance-observations-and-net-worth.md), balance observations and the net-worth dashboard (step 2), implementing the accepted [RFC 0006](decisions/0006-balance-observations.md). Approved 2026-09-25.
 - **Draft:** [Plan 0001](plans/0001-rfc-0004-authority-and-reconciliation.md), RFC 0004 unit two (step 4), with the original handoff text.

@@ -7,9 +7,10 @@ read_when: Designing the next unit of work, starting an approved plan, or checki
 
 A plan is one unit of work an agent can carry out without further guidance. RFCs ([decisions](../decisions/README.md)) record _why_ a boundary exists; plans record _how_ a unit is built and proven done.
 
-| Plan                                                  | Status | Unit                                                                                  |
-| ----------------------------------------------------- | ------ | ------------------------------------------------------------------------------------- |
-| [0001](0001-rfc-0004-authority-and-reconciliation.md) | Draft  | RFC 0004 rollout unit two: authority windows and reconciliation checks, no processing |
+| Plan                                                  | Status   | Unit                                                                                  |
+| ----------------------------------------------------- | -------- | ------------------------------------------------------------------------------------- |
+| [0001](0001-rfc-0004-authority-and-reconciliation.md) | Draft    | RFC 0004 rollout unit two: authority windows and reconciliation checks, no processing |
+| [0002](0002-balance-observations-and-net-worth.md)    | Approved | RFC 0006 balance observations, manual and YNAB balance entry, net-worth home page     |
 
 ## Lifecycle
 

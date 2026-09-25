@@ -14,6 +14,7 @@ Architecture decision records, written as RFCs. Each records the context, the de
 | [0003](0003-operational-live-connections.md)     | Accepted, foundation implemented              | Operational control plane for live connections |
 | [0004](0004-transaction-source-authority.md)     | Accepted, rollout unit one of six implemented | Transaction source authority and YNAB cutover  |
 | [0005](0005-ynab-account-persistence.md)         | Accepted, implemented                         | Saving and recognizing YNAB account decisions  |
+| [0006](0006-balance-observations.md)             | Accepted                                      | Balance observations and net worth             |
 
 ## Conventions
 
