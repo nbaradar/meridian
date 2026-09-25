@@ -18,6 +18,10 @@ Design with the owner; write no application code.
 
    Keep the front matter accurate, add a row to `docs/plans/README.md`, and update the Plans section of `docs/status.md`.
 
-4. **Status.** Draft while questions remain. When the owner approves and Open questions is empty, set Approved with the date.
-5. **Check.** Run `pnpm format:check` and `pnpm test`, which includes the documentation checks.
-6. **Report.** Give the plan path, its status, and any open questions, and offer to commit.
+4. **Check.** Run `pnpm format:check` and `pnpm test`, which includes the documentation checks.
+5. **Approval.** The plan stays **Draft** until the owner explicitly approves it; never mark it Approved on your own judgment.
+   - If Open questions is not empty, list the questions, keep it Draft, and stop here.
+   - Otherwise, give a short review summary: goal, scope, non-goals, the key decisions already made, acceptance criteria, and any "Stop and ask if" conditions. Then ask the owner to choose (use AskUserQuestion when available): **Approve**, **Revise** (say what to change), or **Keep as Draft**.
+   - **Approve:** set `Status: Approved` and the `Approved:` date in the plan, update its row in `docs/plans/README.md` and the Plans section of `docs/status.md`, and run `pnpm test` again.
+   - **Revise:** make the changes, then ask again.
+6. **Report.** Give the plan path and its status. If Approved, tell the owner the next step: `/implement-plan NNNN`, ideally in a fresh session so the plan alone carries the context. Offer to commit the plan.
