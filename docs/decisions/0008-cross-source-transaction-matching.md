@@ -68,7 +68,7 @@ A **candidate** is a counted effective transaction that:
 
 1. posts to the same canonical account as the observation (through its current account association);
 2. has the same amount on that account, exactly;
-3. has an `occurred_on` within **D days** of the observation's date (D is open question 1; proposed 5);
+3. has an `occurred_on` within **D = 5 calendar days** of the observation's date (owner decision, 2026-09-27). A window constant, not schema, so it can be tuned later with data;
 4. has no current observation from the incoming observation's source.
 
 Decision:
@@ -78,6 +78,8 @@ Decision:
 - **Otherwise:** `needs_review`, recording every candidate.
 
 Identical groups are paired **one to one by nearest date**. They are auto-matched only when that pairing is the only valid assignment inside the window. If YNAB has two identical coffees on a day and the bank reports two, they pair. If the bank reports three, the unpaired one goes to review instead of being created or dropped.
+
+A **late candidate** also goes to review: same account and exact amount, but dated more than D and at most 2×D (10) days away. A posting slower than the window then becomes a review item instead of a silent duplicate.
 
 A **near miss** goes to review with the candidate attached. That means same account, same payee after normalization, date inside the window, and amount different, for example a tip added when a pending charge posts. Payee text can raise something for review; it never auto-matches on its own.
 
@@ -166,9 +168,24 @@ PostgreSQL must enforce, with integration tests for each:
 
 No unit silently enables the next.
 
+## Evidence from the owner's data
+
+Aggregates from the owner's multi-year YNAB export (September 2026). Exact figures and the rows themselves stay in the private `local/` directory.
+
+- Most rows are Reconciled, which suggests most YNAB accounts were bank-linked and their dates are already bank dates.
+- About 3% of rows share account, date, and amount with another row, and about a quarter of those also share the payee. Identical same-day transactions are real, which is why one source's observations never collapse into one transaction.
+- Share of rows with another same-account, same-amount row within D days: about 3% (D=0), 7% (3), 9% (5), 11% (7), 16% (14). This is the worst-case review rate before one-to-one date pairing.
+- No rows carry YNAB's split marker.
+- A small number of uncleared rows are months old and are likely stale entries.
+
 ## Open questions
 
-1. **Date window D.** Proposed 5 days. It must cover the gap between a purchase and its posting, and between the date entered in YNAB and the bank's date. To be checked against the owner's YNAB export, where rows YNAB imported from a bank carry bank dates.
-2. **YNAB split transactions.** Proposed: a YNAB split, which is several register rows, is one observation whose total is matched against the bank's single row. The YNAB importer groups the rows. Confirm with the export.
+None.
 
-Resolved 2026-09-27: pending connector rows are stored but not counted until posted; category changes are reclassifications; a connector's posted date wins.
+Resolved 2026-09-27 by the owner:
+
+1. **Date window:** D = 5 calendar days, with a review band out to 10 days.
+2. **YNAB splits:** none appear in the owner's data. Until a real split export exists as a fixture, the YNAB importer sends any split-marked row to review rather than guessing how to group it. Grouping a split into one observation is added when a fixture proves the format.
+3. **Pending connector rows** are stored but not counted until posted; YNAB rows count whether or not they are cleared. Uncleared YNAB rows older than 30 days are surfaced for review (RFC 0009), not excluded.
+4. **Category changes** are reclassifications.
+5. **Date precedence:** a connector's posted date wins.
