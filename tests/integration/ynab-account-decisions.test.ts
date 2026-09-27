@@ -104,6 +104,28 @@ describe("PostgreSQL YNAB account decisions", () => {
     expect(JSON.stringify(stored)).not.toContain(sourceName);
   });
 
+  test("saves a new account when the app clock is ahead of the database clock", async () => {
+    // Regression: ingested_at used the app clock and recorded_at the database
+    // clock, so any skew violated account_sources_time_check.
+    const aheadService = createYnabAccountDecisionService(
+      store,
+      digester,
+      () =>
+        utcTimestampSchema.parse(new Date(Date.now() + 5_000).toISOString()),
+      randomUUID,
+    );
+    const sourceName = uniqueName("Clock skew checking");
+    await aheadService.save(createMapping(sourceName));
+
+    const state = (await service.lookup([sourceName])).get(sourceName);
+    if (state?.status !== "tracked") throw new Error("expected tracked");
+    const [times] = await owner`
+      select ingested_at = recorded_at as same_instant
+      from ledger.account_sources where id = ${state.accountSourceId}
+    `;
+    expect(times!.same_instant).toBe(true);
+  });
+
   test("links to an existing account and reports unsaved names", async () => {
     const accountId = randomUUID();
     const accountName = uniqueName("Existing savings");

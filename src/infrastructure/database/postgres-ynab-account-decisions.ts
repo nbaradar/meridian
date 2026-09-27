@@ -25,7 +25,7 @@ import type { MeridianDatabase } from "./client";
 import {
   executeRows,
   insertAccount,
-  insertAccountSource,
+  insertAccountSourceIngestedNow,
   insertLinkRevision,
   postgresErrorCode,
   type SqlExecutor,
@@ -251,7 +251,7 @@ export function createPostgresYnabAccountDecisionStore(
             write.kind === "create_account" ||
             write.kind === "link_account"
           ) {
-            await insertAccountSource(transaction, write.source);
+            await insertAccountSourceIngestedNow(transaction, write.source);
             await insertLinkRevision(transaction, write.link);
           }
           await insertDecision(transaction, write.decision);

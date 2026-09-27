@@ -100,6 +100,40 @@ export async function insertAccountSource(
   }
 }
 
+/**
+ * Inserts an account source ingested at the moment it is recorded, using the
+ * database clock for both timestamps so application clock skew cannot violate
+ * `account_sources_time_check`. A replay must match source, kind, and that
+ * equality.
+ */
+export async function insertAccountSourceIngestedNow(
+  executor: SqlExecutor,
+  source: Omit<NewAccountSource, "ingestedAt">,
+): Promise<void> {
+  await executor.execute(sql`
+    insert into ledger.account_sources (id, source, source_kind, ingested_at)
+    values (${source.id}, ${source.source}, ${source.sourceKind}, now())
+    on conflict (id) do nothing
+  `);
+  const rows = await executeRows<{ matches: boolean }>(
+    executor,
+    sql`
+    select (
+      source = ${source.source}
+      and source_kind = ${source.sourceKind}
+      and ingested_at = recorded_at
+    ) as matches
+    from ledger.account_sources
+    where id = ${source.id}
+  `,
+  );
+  if (rows[0]?.matches !== true) {
+    throw new AccountSourceConflictError(
+      "Account-source identity replay conflicts with the recorded identity",
+    );
+  }
+}
+
 export async function insertLinkRevision(
   executor: SqlExecutor,
   revision: NewAccountSourceLinkRevision,

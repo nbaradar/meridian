@@ -117,4 +117,3 @@ pnpm build
 - **Keys suddenly look like placeholders.** Copying `.env.example` over `.env` replaces every real key with a placeholder. Restore `.env` from your backup; if the YNAB digest key is gone, saved YNAB accounts will show as unsaved.
 - **Changes to `.env` have no effect.** Next.js reads `.env` only at startup. Restart `pnpm dev`.
 - **"This YNAB review expired."** Reviews last 30 minutes and are lost on server restart. Analyze the export again; saved accounts are not affected.
-- **Saving a new YNAB account fails with "YNAB decision conflicts with recorded ledger state".** If the PostgreSQL log shows `account_sources_time_check`, the host clock is slightly ahead of the Docker database clock: the source's ingest time comes from the app, its record time from the database. Retrying may succeed; restarting Docker Desktop resynchronizes its clock. A fix is a tracked follow-up of Plan 0002.

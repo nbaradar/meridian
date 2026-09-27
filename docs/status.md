@@ -15,7 +15,6 @@ Replace, don't append; finished detail goes to [history.md](history.md) as a sho
 - **Last verified:** 197 unit tests, 128 PostgreSQL integration tests.
 - **Repository:** public; owner-specific facts live in the gitignored `local/` directory ([security and keys](architecture/security-and-keys.md#where-secrets-and-personal-data-live)).
 - **Not built:** transaction import or any transaction write, cross-source matching, the Inbox (designed in RFC 0009), reviewed provider balance policies, live connectors, institution grouping, backups.
-- **Known problem:** saving a new YNAB account can fail when the host clock is ahead of the Docker database clock ([README troubleshooting](../README.md#troubleshooting)); a follow-up from Plan 0002.
 
 ## Agreed priority (2026-09-27)
 

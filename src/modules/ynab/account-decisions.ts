@@ -68,17 +68,25 @@ export interface NewYnabAccountDecision extends YnabLabelDigest {
   supersedesDecisionId: YnabAccountDecisionId | null;
 }
 
+/**
+ * A YNAB account source is ingested at the moment its decision is saved, so
+ * it carries no ingestion time of its own: the store records `ingested_at` as
+ * the database's recording time. The app clock never has to agree with the
+ * database clock (a skew would otherwise violate `ingested_at <= recorded_at`).
+ */
+export type NewYnabAccountSource = Omit<NewAccountSource, "ingestedAt">;
+
 export type YnabAccountDecisionWrite =
   | {
       kind: "create_account";
       account: NewAccount;
-      source: NewAccountSource;
+      source: NewYnabAccountSource;
       link: NewAccountSourceLinkRevision;
       decision: NewYnabAccountDecision;
     }
   | {
       kind: "link_account";
-      source: NewAccountSource;
+      source: NewYnabAccountSource;
       link: NewAccountSourceLinkRevision;
       decision: NewYnabAccountDecision;
     }
@@ -266,11 +274,10 @@ export function createYnabAccountDecisionService(
         return;
       }
 
-      const source: NewAccountSource = {
+      const source: NewYnabAccountSource = {
         id: accountSourceIdSchema.parse(newId()),
         source: "ynab",
         sourceKind: "import",
-        ingestedAt: now,
       };
       const decision: NewYnabAccountDecision = {
         ...decisionFields,
