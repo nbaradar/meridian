@@ -21,13 +21,6 @@ export const balanceObservationIdSchema = z
 export const balanceObservationRetractionIdSchema = z
   .uuid()
   .brand<"BalanceObservationRetractionId">();
-export const authorityWindowIdSchema = z.uuid().brand<"AuthorityWindowId">();
-export const authorityRevisionIdSchema = z
-  .uuid()
-  .brand<"AuthorityRevisionId">();
-export const reconciliationCheckIdSchema = z
-  .uuid()
-  .brand<"ReconciliationCheckId">();
 
 export type AccountId = z.infer<typeof accountIdSchema>;
 export type AccountRevisionId = z.infer<typeof accountRevisionIdSchema>;
@@ -46,6 +39,3 @@ export type BalanceObservationId = z.infer<typeof balanceObservationIdSchema>;
 export type BalanceObservationRetractionId = z.infer<
   typeof balanceObservationRetractionIdSchema
 >;
-export type AuthorityWindowId = z.infer<typeof authorityWindowIdSchema>;
-export type AuthorityRevisionId = z.infer<typeof authorityRevisionIdSchema>;
-export type ReconciliationCheckId = z.infer<typeof reconciliationCheckIdSchema>;

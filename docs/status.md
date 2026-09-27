@@ -10,9 +10,8 @@ Replace, don't append; finished detail goes to [history.md](history.md) as a sho
 ## Current state (2026-09-25)
 
 - **Usable:** net worth at `/` with each account's current balance, date, source, and age, plus manual record, correct, and retract; manual account/category creation at `/setup`; YNAB export analysis, saving YNAB account decisions (create, link, renamed, exclude), and saving YNAB export balances at `/ynab`.
-- **Retiring:** Plan 0001's transaction-authority windows and reconciliation checks (core and schema only, unused). RFC 0008 superseded their design; its first plan drops them.
-- **Schema:** 14 migrations; 18 append-only `ledger.*` tables and 7 current views; 6 `ops.*` tables.
-- **Last verified:** 197 unit tests, 128 PostgreSQL integration tests.
+- **Schema:** 15 migrations; 16 append-only `ledger.*` tables and 6 current views; 6 `ops.*` tables.
+- **Last verified:** 182 unit tests, 119 PostgreSQL integration tests.
 - **Repository:** public; owner-specific facts live in the gitignored `local/` directory ([security and keys](architecture/security-and-keys.md#where-secrets-and-personal-data-live)).
 - **Not built:** transaction import or any transaction write, cross-source matching, the Inbox (designed in RFC 0009), reviewed provider balance policies, live connectors, institution grouping, backups.
 
@@ -22,10 +21,10 @@ Replace, don't append; finished detail goes to [history.md](history.md) as a sho
 
 1. ~~RFC 0005: YNAB account persistence~~ — done 2026-09-25.
 2. ~~RFC 0006 balance observations and the net-worth dashboard~~ — done 2026-09-25 ([Plan 0002](plans/0002-balance-observations-and-net-worth.md)).
-3. ~~RFC 0004 rollout unit two~~ — done 2026-09-25 ([Plan 0001](plans/0001-rfc-0004-authority-and-reconciliation.md)); its tables are to be retired under RFC 0008.
+3. ~~RFC 0004 rollout unit two~~ — done 2026-09-25 ([Plan 0001](plans/0001-rfc-0004-authority-and-reconciliation.md)); its code and tables were removed 2026-09-27 (migration `0014`).
 4. ~~RFC 0008: cross-source transaction matching~~ — accepted 2026-09-27 ([RFC 0008](decisions/0008-cross-source-transaction-matching.md)): D = 5 days with a 10-day review band, pending rows not counted, reclassification for category changes, connector date wins.
 5. ~~RFC 0009: the Inbox~~ — accepted 2026-09-27 ([RFC 0009](decisions/0009-inbox.md)): computed system items with `review`, `decision`, `action`, and `info` severities, owner tasks, snooze (and dismiss for routine items), and a new mutable `app.*` workspace schema. The Inbox never decides or acts.
-6. **Plans:** Inbox v1 next (owner tasks, the balance items, snooze and dismiss, `/inbox`, and the count); then the observations schema and matching engine (retiring the authority and reconciliation-check tables); then YNAB transaction import through the matching engine. Then the live connector feed, then the account details store ([expansion](future/expansion.md#deferred-feature-user-entered-account-details)).
+6. **Plans:** Inbox v1 next (owner tasks, the balance items, snooze and dismiss, `/inbox`, and the count); then the observations schema and matching engine; then YNAB transaction import through the matching engine. Then the live connector feed, then the account details store ([expansion](future/expansion.md#deferred-feature-user-entered-account-details)).
 7. **Later, Phase 3:** goals as capital buckets and a deterministic policy engine whose findings reach the Inbox as decisions ([capital policies](future/capital-policies.md)); needs categorized spending and positions first.
 
 ## Plans ([index](plans/README.md))

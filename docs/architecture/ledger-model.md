@@ -23,17 +23,6 @@ account_sources     (id, source, source_kind, ingested_at, recorded_at)
 account_source_link_revisions
                     (id, account_source_id, account_id, status, supersedes_id, ...)
 source_records      (id, source, source_ref, content_digest, supersedes_id, ...)
-transaction_authority_revisions
-                    (id, authority_window_id, account_id, account_source_id,
-                     starts_on, ends_on, status, supersedes_revision_id,
-                     reason_code, reconciliation_check_id, recorded_at)  -- RFC 0004; dropped by RFC 0008
-current_transaction_authority_windows  -- view (RFC 0004); dropped by RFC 0008
-reconciliation_checks
-                    (id, account_id, account_source_id, cutoff_on,
-                     observation_starts_on, observation_ends_on,
-                     ledger_balance NUMERIC, provider_balance NUMERIC, currency,
-                     balance_semantic, difference NUMERIC, tolerance NUMERIC,
-                     result, raw_payload_id, recorded_at)  -- RFC 0004; dropped by RFC 0008
 instruments         (id, symbol, kind, name, ...)          -- equities, funds, crypto, cash
 transactions        (id, occurred_on, occurred_at, description, origin,
                      source_record_id, corrects_transaction_id, ...)

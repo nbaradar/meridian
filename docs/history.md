@@ -185,3 +185,7 @@ The owner's goal-based capital policy idea was captured: generalized in [capital
 ## 2026-09-27 — Fix: saving a new YNAB account under clock skew
 
 Saving a new YNAB account stamped the account source's `ingested_at` with the application clock and `recorded_at` with the database clock, so a host clock even milliseconds ahead of the Docker database violated `account_sources_time_check` (Plan 0002 follow-up). A YNAB source is ingested when its decision is saved, so the YNAB decision store now records both timestamps from the database clock (`insertAccountSourceIngestedNow`), and the write type no longer carries an ingestion time. Covered by an integration test with the app clock five seconds ahead. Verified: 197 unit and 129 integration tests.
+
+## 2026-09-27 — Plan 0001's authority objects removed
+
+At the owner's request, the unused RFC 0004 unit-two code and schema were removed ahead of RFC 0008's first plan. Migration `0014_concerned_nextwave.sql` refuses to run unless `ledger.transaction_authority_revisions` and `ledger.reconciliation_checks` are empty, then drops them, the `current_transaction_authority_windows` view, and their four functions explicitly (no `CASCADE`). The guard was checked against a populated table in a rolled-back transaction. The core services, adapter, identifiers, money helpers used only there, their tests, and the architecture test were deleted. Plan 0001 stays Done as the record of what was built. Verified: 182 unit and 119 integration tests, no schema drift, migration applied to the local database.

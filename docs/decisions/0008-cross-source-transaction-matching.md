@@ -118,7 +118,7 @@ This replaces the `ledger.reconciliation_checks` gate. Checks are computed on de
 
 ### Retiring Plan 0001's objects
 
-`ledger.transaction_authority_revisions`, `ledger.current_transaction_authority_windows`, `ledger.reconciliation_checks`, and their functions and triggers are dropped by a new migration. That migration first asserts both tables are empty and aborts otherwise, so no ledger row is ever deleted. Migration `0013` stays in history unedited.
+`ledger.transaction_authority_revisions`, `ledger.current_transaction_authority_windows`, `ledger.reconciliation_checks`, and their functions and triggers were dropped on 2026-09-27 by migration `0014_concerned_nextwave.sql`, which first asserts both tables are empty and aborts otherwise, so no ledger row was deleted. Migration `0013` stays in history unedited.
 
 ## Carried forward from RFC 0004
 
@@ -219,7 +219,7 @@ PostgreSQL must enforce, with integration tests for each:
 
 ## Rollout
 
-1. **Schema and engine:** processing revisions, the matching function, review state, balance-check computation, and retirement of Plan 0001's objects. No import.
+1. **Schema and engine:** processing revisions, the matching function, review state, and balance-check computation. No import.
 2. **YNAB transaction import** through the engine.
 3. **Inbox integration** (with RFC 0009): review items and balance discrepancies as tasks.
 4. **First live connector** (RFC 0007 order) through the same engine.
@@ -250,4 +250,4 @@ Resolved 2026-09-27 by the owner:
 
 ## Implementation status
 
-Source-record association is implemented (migrations `0009` and `0010`). Processing revisions, matching, review, reclassification, balance checks, and the retirement of Plan 0001's objects are not implemented. The first plan under this RFC covers rollout unit 1.
+Source-record association is implemented (migrations `0009` and `0010`). Plan 0001's authority and reconciliation objects were removed by migration `0014` on 2026-09-27, together with their core code. Processing revisions, matching, review, reclassification, and balance checks are not implemented. The first plan under this RFC covers rollout unit 1.

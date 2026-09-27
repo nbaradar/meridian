@@ -5,7 +5,7 @@ read_when: History only, to learn why cutover windows were designed and then rep
 
 # RFC 0004: Transaction source authority and cutover
 
-- Status: Superseded by [RFC 0008](0008-cross-source-transaction-matching.md) on 2026-09-27. History only: current rules, including those carried forward from this RFC, are in RFC 0008. Association stage implemented 2026-08-03; authority and reconciliation stage implemented 2026-09-25 and to be retired.
+- Status: Superseded by [RFC 0008](0008-cross-source-transaction-matching.md) on 2026-09-27. History only: current rules, including those carried forward from this RFC, are in RFC 0008. Association stage implemented 2026-08-03; authority and reconciliation stage implemented 2026-09-25 and removed 2026-09-27 (migration `0014`).
 - Date: 2026-08-03
 - Decision owners: project owner and implementer
 - Depends on: RFC 0001 and RFC 0002
@@ -629,8 +629,8 @@ recording remains in force.
 On September 27, 2026 the owner replaced this design with any-order import and
 cross-source matching. [RFC 0008](0008-cross-source-transaction-matching.md)
 supersedes this RFC entirely and restates the rules still in force. Units three
-to six will not be built, and unit two's tables are dropped by RFC 0008's first
-migration.
+to six will not be built. Unit two's tables and code were removed on September 27,
+2026 by migration `0014_concerned_nextwave.sql`, before any use.
 
 ## Consequences
 
