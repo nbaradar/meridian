@@ -1,3 +1,5 @@
+// Superseded by RFC 0008; retired with its tables by RFC 0008's first plan.
+// Do not build on it.
 import { sql } from "drizzle-orm";
 import { z } from "zod";
 

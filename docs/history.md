@@ -169,3 +169,9 @@ Verified: 197 unit and 128 integration tests across fourteen migrations, no sche
 The owner chose any-order transaction import from YNAB and live connectors, with conservative cross-source matching and a review Inbox, over RFC 0004's cutover design. RFC 0004 units three to six will not be built as designed; RFC 0008 (matching) and RFC 0009 (Inbox) are to be drafted.
 
 [RFC 0007](decisions/0007-free-first-provider-selection.md) accepted: providers are chosen free first (official institution APIs, Teller, Plaid Trial for gaps, manual file import), with SimpleFIN as the paid backstop, replacing RFC 0003's SimpleFIN-first order. Meridian never stores an institution login and never scrapes.
+
+## 2026-09-27 — RFC 0008 accepted; RFC 0004 superseded
+
+[RFC 0008](decisions/0008-cross-source-transaction-matching.md) accepted: any-order transaction import from any source through processing revisions with a `matched` status, at most one observation per source per transaction, conservative matching (same account, exact amount, dates within 5 days; a review band to 10 days), review instead of guessing, pending connector rows not counted, category changes as reclassification transactions, a connector's posted date winning, and continuous balance checks against RFC 0006 observations. Tolerances were set from aggregates of the owner's YNAB export, kept in `local/`.
+
+RFC 0008 supersedes RFC 0004 entirely and restates the rules still in force: source-record association, observed accounts and transfers, corrections and replacements, ingestion and checkpoints, the global lock order, and the standing rules. RFC 0004 is now history only, and routing no longer points to it. RFC 0001 is amended: many observations per transaction, the entry sign convention, and reclassification transactions. Plan 0001's authority and reconciliation objects are marked for removal by RFC 0008's first plan.

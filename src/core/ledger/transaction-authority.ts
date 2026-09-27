@@ -31,6 +31,9 @@ import {
 } from "./timestamps";
 
 /**
+ * Superseded by RFC 0008 (any-order import with cross-source matching); this
+ * module is retired, with its tables, by RFC 0008's first plan. Do not build on it.
+ *
  * RFC 0004 rollout unit two: which linked account source is authoritative for
  * a canonical account's `transactions` feed over half-open `[startsOn, endsOn)`
  * `occurred_on` windows. Nothing here records a transaction.

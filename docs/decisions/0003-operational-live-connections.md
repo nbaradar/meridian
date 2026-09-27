@@ -9,7 +9,7 @@ read_when: Building a live connector, handling provider credentials or identity,
 - Date: 2026-08-03
 - Decision owners: project owner and implementer
 - Depends on: RFC 0002
-- Related: accepted RFC 0004
+- Related: RFC 0004, superseded by [RFC 0008](0008-cross-source-transaction-matching.md); references below to RFC 0004 now mean RFC 0008
 - Amended by: [RFC 0007](0007-free-first-provider-selection.md) (provider order replaces decision 9, SimpleFIN-first)
 
 ## Context

@@ -28,6 +28,9 @@ import {
 } from "./timestamps";
 
 /**
+ * Superseded by RFC 0008 (any-order import with cross-source matching); this
+ * module is retired, with its tables, by RFC 0008's first plan. Do not build on it.
+ *
  * RFC 0004 reconciliation gate: what a provider-reported balance means. A
  * semantic is only comparable once a reviewed policy, proven by a redacted
  * provider fixture, names it with a tolerance.

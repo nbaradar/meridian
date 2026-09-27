@@ -1,15 +1,16 @@
 ---
-summary: RFC 0008 (Proposed): any-order transaction import from any source, with processing revisions, conservative cross-source matching, one observation per source per transaction, review instead of guessing, and continuous balance checks
-read_when: Importing or normalizing transactions from any source, matching or deduplicating transactions, reviewing ambiguous observations, or retiring RFC 0004 authority windows
+summary: RFC 0008 (Accepted): the current transaction-import design. Any-order import from any source, source-record association, processing revisions, conservative cross-source matching with one observation per source per transaction, review instead of guessing, reclassification, ingestion and checkpoints, and continuous balance checks. Supersedes RFC 0004
+read_when: Importing or normalizing transactions from any source, associating source records with accounts, matching or deduplicating transactions, reviewing ambiguous observations, changing categories, connector ingestion and checkpoints, or retiring Plan 0001's authority objects
 ---
 
 # RFC 0008: Cross-source transaction matching
 
-- Status: Proposed
+- Status: Accepted
 - Date: 2026-09-27
+- Accepted: 2026-09-27
 - Decision owners: project owner and implementer
-- Depends on: RFC 0001, RFC 0002, RFC 0004 (rollout unit one, source-record association), RFC 0006, RFC 0007
-- Supersedes in part: RFC 0004 (see "Relationship to RFC 0004")
+- Depends on: RFC 0001, RFC 0002, RFC 0006, RFC 0007
+- Supersedes: RFC 0004, entirely. The parts still in force are restated under "Carried forward from RFC 0004", so this RFC is the only current source; RFC 0004 is history.
 - Amends: RFC 0001 (see "Amendments to RFC 0001")
 
 ## Context
@@ -38,7 +39,7 @@ Duplicates arise only across sources. Within one source, `(source, source_ref)` 
 
 - **Observation:** one version of one external record, stored as a `ledger.source_records` version with its raw payload and its account association (RFC 0004 unit one). YNAB register rows, bank transactions, and file-import rows are all observations.
 - **Transaction:** a `ledger.transactions` row and its entries. It is the one ledger fact for one real-world event.
-- **Processing revision:** the decision recorded for an observation identity `(source, source_ref)`, in a linear append-only chain (RFC 0004 "Processing Revisions", adopted with the changes below).
+- **Processing revision:** the decision recorded for an observation identity `(source, source_ref)`, in a linear append-only chain spanning that identity's source-record versions.
 
 ## Design
 
@@ -58,7 +59,7 @@ Each observation identity has one linear chain of processing revisions. The curr
 
 **The core invariant:** among current tips, each effective transaction has **at most one observation per source**. PostgreSQL enforces this under an advisory lock on the transaction ID, following the RFC 0004 lock order. As a result a match only ever pairs observations from different sources. Two identical rows from one source can never collapse into one transaction.
 
-Other rules carry over from RFC 0004: exact command replays are no-ops, conflicting replays fail, one predecessor has one successor, changed source versions append a successor rather than editing, and a replaced or retracted transaction is exactly reversed by a system correction.
+Exact command replays are no-ops and conflicting replays fail. A partial unique root index on `(source, source_ref)` plus unique predecessors prevents concurrent roots and branches. Changed source versions append a successor rather than editing, and a replaced or retracted transaction is exactly reversed by a system correction (see "Corrections and replacements").
 
 ### Matching rules
 
@@ -119,6 +120,63 @@ This replaces the `ledger.reconciliation_checks` gate. Checks are computed on de
 
 `ledger.transaction_authority_revisions`, `ledger.current_transaction_authority_windows`, `ledger.reconciliation_checks`, and their functions and triggers are dropped by a new migration. That migration first asserts both tables are empty and aborts otherwise, so no ledger row is ever deleted. Migration `0013` stays in history unedited.
 
+## Carried forward from RFC 0004
+
+These rules were accepted in RFC 0004 and remain in force. They are restated here so this RFC is the single current source.
+
+### Source-record account association (implemented)
+
+Implemented by migrations `0009_jittery_thunderbird.sql` and `0010_modern_nehzno.sql`: `ledger.source_record_account_sets`, `ledger.source_record_accounts`, and the view `ledger.current_source_record_account_sets`.
+
+- Each source-record version has one root and one non-branching chain of association sets. A set names the account sources the record directly observes, each with role `observed_account`.
+- `member_count` is positive and a deferred trigger requires the committed members to match it, so a set is sealed.
+- Every member is currently linked when the set is recorded. `link_revision_id` captures that exact RFC 0002 link tip, and a later unlink or relink never rewrites it.
+- A source record and its member account sources use the same registered `source`. Provider-native identity never enters these tables.
+- A mistaken mapping with unchanged source bytes appends a corrected set; it never invents a duplicate source record or mutates the old set.
+- A processing revision references one complete association set. Both may be inserted in one database transaction.
+
+### Observed accounts and transfers
+
+- Every account posting of an external transaction resolves through a member of its association set. Categories, including Transfer Clearing, need no association.
+- A transfer seen by one institution posts only that institution's account side, against Transfer Clearing. A record cannot claim an account at another provider. Pairing the two sides is later work.
+- A record that genuinely observes several accounts is processed whole or not at all: if any account side cannot be decided, the whole record goes to review. Meridian never posts half an observation.
+
+### Corrections and replacements
+
+- **Changed external observation:** a new source-record version references the prior one. If its values change the effective transaction, one atomic operation reverses the prior transaction exactly, records the new association, writes the replacement, and advances every affected processing chain. If it needs review, the prior effective transaction stays in place until review retains, replaces, or retracts it.
+- **Changed normalization or mistaken mapping:** with unchanged source bytes, a reviewed successor may reverse and replace the transaction while keeping the same source record. A mapping correction first appends a corrected association set.
+- **Relink after ingestion:** a bare RFC 0002 relink of an account source that already has processed observations is blocked. Affected observations must be corrected or sent to review in the same operation. Until that operation exists and is tested, such relinks fail.
+
+### Ingestion and checkpoints
+
+- A provider-neutral orchestrator seals and commits the raw response to `ledger.raw_payloads` before normalization. If retention fails, normalization does not run.
+- It then atomically records source-record versions, association, processing revisions, any transaction, and the matching `ops.sync_checkpoints` cursor update. Every checkpoint update carries the current fencing token (RFC 0003).
+- If that transaction fails, the cursor does not advance, and refetching is idempotent by raw and source digests. A durably recorded `needs_review` or `ignored` observation may advance the cursor; an unrecorded failure may not.
+- Connector modules receive no persistence port and cannot open transactions directly. An architecture test proves connectors cannot bypass the processing service.
+
+### Concurrency and locking
+
+Decisions that can invalidate each other serialize on transaction-level advisory locks taken, in this order, before any current-tip check:
+
+1. a domain-separated digest of `(source, source_ref)`, for processing roots and successors;
+2. YNAB label digest, for RFC 0005 account decisions;
+3. source-record ID, for association-set revisions;
+4. transaction ID, for the one-observation-per-source rule and replacements (new in this RFC);
+5. canonical account ID, for RFC 0006 balance observations;
+6. account-source ID, for link, unlink, relink, association, and YNAB export balances (the lock RFC 0002 link revisions take).
+
+The implemented triggers already follow this order: association sets lock the source record before their members lock account sources, RFC 0005 locks the label before the account source, and RFC 0006 locks the account before the account source.
+
+Several identities in one domain are locked in sorted UUID order. Hash collisions may serialize unrelated work but never permit invalid work, and the owner and runtime roles cannot bypass the trigger paths. Unique root and successor indexes remain the final branch backstop. A loser re-reads the new tip and fails closed.
+
+### Other rules still in force
+
+- No automatic Balance Adjustment: a discrepancy is a signal for review, never permission to invent a balancing transaction.
+- A provider's balance semantics (current, available, posted-only, includes pending) and any tolerance are used only after review from a redacted fixture.
+- Amounts are canonical decimal strings at boundaries and `NUMERIC` in PostgreSQL; no JavaScript `number` participates.
+- Amount, date, and payee similarity alone never merges records; see "Matching rules" for what does.
+- Staged rollout: no unit silently enables the next, and each requires fresh-schema migration, disposable PostgreSQL integration, schema-drift, unit and property, formatting, lint, typecheck, and build validation.
+
 ## Amendments to RFC 0001
 
 1. **Cardinality:** a source-record version no longer normalizes to at most one transaction through a unique `transactions.source_record_id`. The processing chain proves which transaction each observation currently stands behind, and several observations may stand behind one transaction. `transactions.source_record_id` becomes the introducing observation's version and loses its uniqueness. That applies RFC 0004's planned replacement of the rule.
@@ -126,26 +184,26 @@ This replaces the `ledger.reconciliation_checks` gate. Checks are computed on de
 3. **Entry sign:** an account entry is the account's change in net-worth contribution, for assets and liabilities alike. This formalizes the owner's decision of 2026-09-25, recorded in the ledger model.
 4. **Reclassification transactions:** a new system-originated transaction kind that references the transaction it reclassifies. It posts only to category destinations, sums to zero, and is distinct from a correction, which must exactly negate the original. PostgreSQL enforces that it has no account entries and that its target is an existing non-reclassification transaction.
 
-## Relationship to RFC 0004
+## What happened to RFC 0004's decisions
 
 | RFC 0004 acceptance decision                                                                   | Under this RFC                                                                                              |
 | ---------------------------------------------------------------------------------------------- | ----------------------------------------------------------------------------------------------------------- |
 | 1. Seven-object boundary                                                                       | Superseded: association and processing kept; authority, evidence, exceptions, reconciliation tables dropped |
-| 2. Association revision chains with exact link proof                                           | Kept                                                                                                        |
+| 2. Association revision chains with exact link proof                                           | Carried forward                                                                                             |
 | 3. Per-account `transactions` authority                                                        | Superseded                                                                                                  |
 | 4. Half-open authority windows                                                                 | Superseded                                                                                                  |
-| 5. Authority only for directly observed accounts; cross-source transfers via Transfer Clearing | Transfer rule kept; authority part superseded                                                               |
+| 5. Authority only for directly observed accounts; cross-source transfers via Transfer Clearing | Transfer rule carried forward; authority part superseded                                                    |
 | 6. Explicit YNAB-before/live-after cutover                                                     | Superseded                                                                                                  |
 | 7. Quarantine rather than fuzzy merge                                                          | Superseded by conservative matching plus review; payee text alone never matches                             |
-| 8. Processing chains per `(source, source_ref)`                                                | Kept and extended with `matched`                                                                            |
-| 9. Replacing one-transaction-per-source-record uniqueness                                      | Kept (amendment 1 above)                                                                                    |
-| 10. Correction/replacement for unchanged observations                                          | Kept                                                                                                        |
+| 8. Processing chains per `(source, source_ref)`                                                | Carried forward and extended with `matched`                                                                 |
+| 9. Replacing one-transaction-per-source-record uniqueness                                      | Carried forward (amendment 1 above)                                                                         |
+| 10. Correction/replacement for unchanged observations                                          | Carried forward                                                                                             |
 | 11. Reconciliation as an activation gate                                                       | Superseded by continuous balance checks                                                                     |
-| 12. Provider balance semantics blocked until fixture review                                    | Kept                                                                                                        |
-| 13. No automatic Balance Adjustment                                                            | Kept                                                                                                        |
-| 14. Decimal strings and `NUMERIC`                                                              | Kept                                                                                                        |
-| 15. Database lock order                                                                        | Kept, extended with the transaction-ID lock                                                                 |
-| 16. Staged rollout, no implicit write enablement                                               | Kept                                                                                                        |
+| 12. Provider balance semantics blocked until fixture review                                    | Carried forward                                                                                             |
+| 13. No automatic Balance Adjustment                                                            | Carried forward                                                                                             |
+| 14. Decimal strings and `NUMERIC`                                                              | Carried forward                                                                                             |
+| 15. Database lock order                                                                        | Carried forward, extended with the transaction-ID lock                                                      |
+| 16. Staged rollout, no implicit write enablement                                               | Carried forward                                                                                             |
 
 ## Database enforcement
 
@@ -189,3 +247,7 @@ Resolved 2026-09-27 by the owner:
 3. **Pending connector rows** are stored but not counted until posted; YNAB rows count whether or not they are cleared. Uncleared YNAB rows older than 30 days are surfaced for review (RFC 0009), not excluded.
 4. **Category changes** are reclassifications.
 5. **Date precedence:** a connector's posted date wins.
+
+## Implementation status
+
+Source-record association is implemented (migrations `0009` and `0010`). Processing revisions, matching, review, reclassification, balance checks, and the retirement of Plan 0001's objects are not implemented. The first plan under this RFC covers rollout unit 1.

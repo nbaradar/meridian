@@ -1,11 +1,11 @@
 ---
-summary: RFC 0004 (Accepted, staged): which source is authoritative for an account's transactions, reconciliation gates, and the YNAB-to-live cutover
-read_when: Importing or normalizing transactions, reconciliation, authority windows, or the YNAB cutover
+summary: RFC 0004 (Superseded by RFC 0008): history only. The original cutover design with per-account transaction-authority windows and reconciliation gates. Its source-record association stage was built; its still-valid rules are restated in RFC 0008
+read_when: History only, to learn why cutover windows were designed and then replaced, or why the association tables look as they do. Never for current rules; read RFC 0008 instead
 ---
 
 # RFC 0004: Transaction source authority and cutover
 
-- Status: Accepted, association stage implemented 2026-08-03; authority and reconciliation stage implemented 2026-09-25
+- Status: Superseded by [RFC 0008](0008-cross-source-transaction-matching.md) on 2026-09-27. History only: current rules, including those carried forward from this RFC, are in RFC 0008. Association stage implemented 2026-08-03; authority and reconciliation stage implemented 2026-09-25 and to be retired.
 - Date: 2026-08-03
 - Decision owners: project owner and implementer
 - Depends on: RFC 0001 and RFC 0002
@@ -625,6 +625,12 @@ revisions, authority evidence, exceptions, reviewed balance policies, changed
 transaction cardinality, YNAB persistence, cutover activation, or monetary
 writes. The existing architecture prohibition on linkage-driven transaction
 recording remains in force.
+
+On September 27, 2026 the owner replaced this design with any-order import and
+cross-source matching. [RFC 0008](0008-cross-source-transaction-matching.md)
+supersedes this RFC entirely and restates the rules still in force. Units three
+to six will not be built, and unit two's tables are dropped by RFC 0008's first
+migration.
 
 ## Consequences
 

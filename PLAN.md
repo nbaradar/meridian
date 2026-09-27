@@ -150,7 +150,7 @@ An MCP server over Plane A read views plus the news feed, so financial questions
 - [x] ~~Backup strategy~~ — decided: encrypted `pg_dump --schema=ledger` off-box from phase 0.
 - [x] ~~Minimum Phase 0 ledger schema.~~ — RFC 0001 accepted August 2, 2026: Phase 0 is USD-only, categories are journal destinations, provider revisions use append-only corrections, and encrypted raw payloads retain a digest.
 - [x] ~~Operational live-connection boundary.~~ RFC 0003 accepted August 3, 2026; the protected `ops.*` foundation is implemented, but live connector calls and non-discovery feeds remain disabled.
-- [x] ~~Transaction-source authority and YNAB cutover design.~~ RFC 0004 accepted August 3, 2026; only the no-write source-record association stage is implemented, and later authority/reconciliation stages remain required before normalized transaction writes.
+- [x] ~~Transaction-source authority and YNAB cutover design.~~ RFC 0004 accepted August 3, 2026, then superseded on September 27, 2026 by RFC 0008: any-order import with cross-source matching and review. Source-record association is implemented; processing and matching are required before normalized transaction writes.
 
 ---
 

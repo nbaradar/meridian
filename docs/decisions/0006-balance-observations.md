@@ -11,7 +11,7 @@ read_when: Recording or displaying balances, computing net worth, correcting a b
 - Implemented: 2026-09-25 (migration `0012_hesitant_johnny_blaze.sql`)
 - Decision owners: project owner and implementer
 - Depends on: RFC 0001, RFC 0002, RFC 0005
-- Relates to: RFC 0004 ("Position and balance observations need their own accepted persistence boundary")
+- Relates to: RFC 0004 ("Position and balance observations need their own accepted persistence boundary"), superseded by [RFC 0008](0008-cross-source-transaction-matching.md), which compares balance observations with transactions continuously
 
 ## Context
 

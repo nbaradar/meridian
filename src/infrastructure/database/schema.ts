@@ -622,6 +622,7 @@ export const entries = ledger.table(
   ],
 );
 
+// Superseded by RFC 0008; dropped by its first plan. Do not build on it.
 // RFC 0004 rollout unit two: immutable reconciliation evidence. The ledger
 // balance and difference are computed by the insert trigger (migration 0013).
 export const reconciliationChecks = ledger.table(
@@ -697,6 +698,7 @@ export const reconciliationChecks = ledger.table(
   ],
 );
 
+// Superseded by RFC 0008; dropped by its first plan. Do not build on it.
 // RFC 0004 rollout unit two: append-only transaction-authority windows. Each
 // window has one linear chain proposed -> active -> revoked (or
 // proposed -> revoked); transitions, links, overlap, and the reconciliation

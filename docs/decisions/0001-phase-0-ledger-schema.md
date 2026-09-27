@@ -5,11 +5,11 @@ read_when: Changing ledger tables, transactions, entries, corrections, source re
 
 # RFC 0001: Minimum Phase 0 ledger schema
 
-- Status: Accepted, amended through 2026-08-03
+- Status: Accepted, amended through 2026-08-03; amended by [RFC 0008](0008-cross-source-transaction-matching.md) on 2026-09-27 (many observations per transaction, entry sign convention, reclassification transactions)
 - Date: 2026-08-02
 - Accepted: 2026-08-02
 - Decision owners: project owner and implementer
-- Followed by: RFC 0002, RFC 0003, and RFC 0004
+- Followed by: RFC 0002, RFC 0003, and RFC 0004 (superseded by RFC 0008)
 
 ## Context
 
