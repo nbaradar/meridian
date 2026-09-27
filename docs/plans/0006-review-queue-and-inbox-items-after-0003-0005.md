@@ -1,5 +1,5 @@
 ---
-summary: Plan 0006 (Draft): RFC 0008 rollout unit 3 with RFC 0009: review screens that resolve matches, and the matching and YNAB Inbox providers
+summary: Plan 0006 (Draft): RFC 0008 rollout unit 3 with RFC 0009: review screens that resolve matches, the ModuleDefinition registry, and the matching and YNAB Inbox providers
 read_when: Building the review screens or the matching and YNAB Inbox items
 ---
 
@@ -19,6 +19,7 @@ Every `needs_review` observation, balance discrepancy, and stale uncleared YNAB 
 
 ## Scope
 
+- The `ModuleDefinition` type and module registry, with the `attention?: AttentionProvider[]` extension point ([module contract](../architecture/modules.md)). Plan 0003 deliberately passes providers to the Inbox as a plain list, because its only provider (balances) is core. `stale_uncleared` comes from the YNAB module, which may not be imported by core or the app's Inbox wiring, so it must register through the registry. Design how modules register at boot and how the Inbox gets core and module providers together.
 - Attention providers for `needs_review`, `balance_discrepancy`, and `stale_uncleared`.
 - Review screens: match to a candidate, create, or ignore, recorded as processing successors.
 - Reclassification from the review or transaction view.
@@ -41,6 +42,8 @@ Every `needs_review` observation, balance discrepancy, and stale uncleared YNAB 
 - `review` items can only be snoozed. The Inbox links to the review screen; it never records the decision itself.
 
 ## Open questions
+
+- How the registry is populated at boot (static list of module definitions vs. discovery), and whether core providers join it or stay a separate list.
 
 - Review screen layout and what evidence to show (candidates, date and amount deltas, payee).
 - Whether to allow bulk actions.

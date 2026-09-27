@@ -24,8 +24,8 @@ Replace, don't append; finished detail goes to [history.md](history.md) as a sho
 3. ~~RFC 0004 rollout unit two~~ — done 2026-09-25 ([Plan 0001](plans/0001-rfc-0004-authority-and-reconciliation.md)); its code and tables were removed 2026-09-27 (migration `0014`).
 4. ~~RFC 0008: cross-source transaction matching~~ — accepted 2026-09-27 ([RFC 0008](decisions/0008-cross-source-transaction-matching.md)): D = 5 days with a 10-day review band, pending rows not counted, reclassification for category changes, connector date wins.
 5. ~~RFC 0009: the Inbox~~ — accepted 2026-09-27 ([RFC 0009](decisions/0009-inbox.md)): computed system items with `review`, `decision`, `action`, and `info` severities, owner tasks, snooze (and dismiss for routine items), and a new mutable `app.*` workspace schema. The Inbox never decides or acts.
-6. **Plans, in order** (all Draft; [index](plans/README.md)):
-   1. [Plan 0003](plans/0003-inbox-v1.md): Inbox v1.
+6. **Plans, in order** (0003 Approved, the rest Draft; [index](plans/README.md)):
+   1. [Plan 0003](plans/0003-inbox-v1.md): Inbox v1 (Approved 2026-09-27).
    2. [Plan 0004](plans/0004-processing-and-matching-engine.md): processing revisions and matching engine.
    3. [Plan 0005](plans/0005-ynab-transaction-import-after-0004.md): YNAB transaction import (after 0004).
    4. [Plan 0006](plans/0006-review-queue-and-inbox-items-after-0003-0005.md): review queue and Inbox items (after 0003 and 0005).
@@ -42,5 +42,5 @@ Replace, don't append; finished detail goes to [history.md](history.md) as a sho
 ## Plans ([index](plans/README.md))
 
 - **In progress:** none.
-- **Next to implement:** none approved. [Plan 0003](plans/0003-inbox-v1.md), Inbox v1, is first; resume it with `/plan-unit 0003`. Plans 0004 to 0012 are sparse Drafts for tracking.
+- **Next to implement:** [Plan 0003](plans/0003-inbox-v1.md), Inbox v1, Approved 2026-09-27; run `/implement-plan 0003`. Plans 0004 to 0012 are sparse Drafts for tracking; Plan 0006 now also owns the `ModuleDefinition` registry.
 - **Last done:** [Plan 0001](plans/0001-rfc-0004-authority-and-reconciliation.md), RFC 0004 authority windows and reconciliation checks; before it, [Plan 0002](plans/0002-balance-observations-and-net-worth.md).
