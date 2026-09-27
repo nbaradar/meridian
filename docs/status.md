@@ -30,5 +30,5 @@ Replace, don't append; finished detail goes to [history.md](history.md) as a sho
 ## Plans ([index](plans/README.md))
 
 - **In progress:** none.
-- **Next to implement:** none approved. Plan Inbox v1 (step 6) with `/plan-unit`.
+- **Next to implement:** none approved. [Plan 0003](plans/0003-inbox-v1.md), Inbox v1 (step 6), is a Draft with open questions; resume it with `/plan-unit 0003`.
 - **Last done:** [Plan 0001](plans/0001-rfc-0004-authority-and-reconciliation.md), RFC 0004 authority windows and reconciliation checks; before it, [Plan 0002](plans/0002-balance-observations-and-net-worth.md).
