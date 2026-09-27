@@ -14,7 +14,7 @@ Replace, don't append; finished detail goes to [history.md](history.md) as a sho
 - **Schema:** 14 migrations; 18 append-only `ledger.*` tables and 7 current views; 6 `ops.*` tables.
 - **Last verified:** 197 unit tests, 128 PostgreSQL integration tests.
 - **Repository:** public; owner-specific facts live in the gitignored `local/` directory ([security and keys](architecture/security-and-keys.md#where-secrets-and-personal-data-live)).
-- **Not built:** transaction import or any transaction write, cross-source matching, the Inbox, reviewed provider balance policies, live connectors, institution grouping, backups.
+- **Not built:** transaction import or any transaction write, cross-source matching, the Inbox (designed in RFC 0009), reviewed provider balance policies, live connectors, institution grouping, backups.
 - **Known problem:** saving a new YNAB account can fail when the host clock is ahead of the Docker database clock ([README troubleshooting](../README.md#troubleshooting)); a follow-up from Plan 0002.
 
 ## Agreed priority (2026-09-27)
@@ -25,11 +25,12 @@ Replace, don't append; finished detail goes to [history.md](history.md) as a sho
 2. ~~RFC 0006 balance observations and the net-worth dashboard~~ — done 2026-09-25 ([Plan 0002](plans/0002-balance-observations-and-net-worth.md)).
 3. ~~RFC 0004 rollout unit two~~ — done 2026-09-25 ([Plan 0001](plans/0001-rfc-0004-authority-and-reconciliation.md)); its tables are to be retired under RFC 0008.
 4. ~~RFC 0008: cross-source transaction matching~~ — accepted 2026-09-27 ([RFC 0008](decisions/0008-cross-source-transaction-matching.md)): D = 5 days with a 10-day review band, pending rows not counted, reclassification for category changes, connector date wins.
-5. **RFC 0009: the Inbox** (to draft). System-computed and stored tasks, owner-created tasks, how modules contribute tasks, and where its tables live (not `ledger.*`).
-6. **Plans, each after its RFC is accepted:** Inbox v1 (owner tasks and balance-related system tasks); observations schema and matching engine (retiring the authority and reconciliation-check tables); YNAB transaction import through the matching engine. Then the live connector feed, then the account details store ([expansion](future/expansion.md#deferred-feature-user-entered-account-details)).
+5. ~~RFC 0009: the Inbox~~ — accepted 2026-09-27 ([RFC 0009](decisions/0009-inbox.md)): computed system items with `review`, `decision`, `action`, and `info` severities, owner tasks, snooze (and dismiss for routine items), and a new mutable `app.*` workspace schema. The Inbox never decides or acts.
+6. **Plans:** Inbox v1 next (owner tasks, the balance items, snooze and dismiss, `/inbox`, and the count); then the observations schema and matching engine (retiring the authority and reconciliation-check tables); then YNAB transaction import through the matching engine. Then the live connector feed, then the account details store ([expansion](future/expansion.md#deferred-feature-user-entered-account-details)).
+7. **Later, Phase 3:** goals as capital buckets and a deterministic policy engine whose findings reach the Inbox as decisions ([capital policies](future/capital-policies.md)); needs categorized spending and positions first.
 
 ## Plans ([index](plans/README.md))
 
 - **In progress:** none.
-- **Next to implement:** none approved. Draft RFC 0009, the Inbox (step 5), then plan Inbox v1 with `/plan-unit`.
+- **Next to implement:** none approved. Plan Inbox v1 (step 6) with `/plan-unit`.
 - **Last done:** [Plan 0001](plans/0001-rfc-0004-authority-and-reconciliation.md), RFC 0004 authority windows and reconciliation checks; before it, [Plan 0002](plans/0002-balance-observations-and-net-worth.md).

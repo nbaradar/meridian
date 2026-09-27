@@ -15,6 +15,8 @@ Paths are relative to the repository root.
 | Ledger schema, money, transactions, categories, ingesting external data | `docs/architecture/ledger-model.md` (includes data conventions), `docs/decisions/0001-phase-0-ledger-schema.md`, `docs/architecture/overview.md` |
 | Connectors, sync, discovery, provider credentials, anything institution-specific | `docs/institutions.md` (which can trade, which APIs are forbidden), `docs/decisions/0007-free-first-provider-selection.md`, `docs/decisions/0003-operational-live-connections.md`, `docs/decisions/0008-cross-source-transaction-matching.md` |
 | Transaction import, matching, review, balances and balance checks | `docs/decisions/0008-cross-source-transaction-matching.md`, `docs/decisions/0006-balance-observations.md`, `docs/architecture/overview.md` |
+| Inbox, owner tasks, attention items, `app.*` workspace state | `docs/decisions/0009-inbox.md` |
+| Goals, capital policies, recommendations, the strategy engine | `docs/future/capital-policies.md`, `PLAN.md` (Phase 3) |
 | Modules, interfaces, where code belongs | `docs/architecture/modules.md` |
 | Keys, secrets, encryption | `docs/architecture/security-and-keys.md` |
 | Execution, orders, strategies, broker credentials, backups, exposure | `docs/architecture/safety.md`, required before touching `src/modules/execution/` |
@@ -58,6 +60,11 @@ Rules:
 - `world.prices` is bitemporal (`price_date` + `ingested_at`) and append-only: a revised historical close is a new row, never an update, so backtests don't silently change.
 - `world.news_*` is the only mutable/prunable data.
 - Anything added to `ledger.*` must be worth backing up forever; otherwise it belongs in `world.*`.
+
+Two further schemas are not data planes and never hold financial facts:
+
+- **`ops.*`** (RFC 0003): live-connection control plane with encrypted credentials and checkpoints, under restricted roles.
+- **`app.*`** (RFC 0009): the owner's workspace, such as Inbox tasks and snoozes. Mutable and backed up. **A decision about money belongs in `ledger.*`; workspace state belongs in `app.*`.** Ledger, world, strategy, and execution code never read `app.*`.
 
 ## Non-negotiable invariants
 

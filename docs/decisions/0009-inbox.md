@@ -1,12 +1,13 @@
 ---
-summary: RFC 0009 (Proposed): the Inbox, one surface for everything needing the owner, combining computed system items (reviews, decisions, upkeep) with owner tasks; the Inbox never decides or acts, and only owner workspace state lives in a new mutable app.* schema
+summary: RFC 0009 (Accepted): the Inbox, one surface for everything needing the owner, combining computed system items (reviews, decisions, upkeep) with owner tasks; the Inbox never decides or acts, and only owner workspace state lives in a new mutable app.* schema
 read_when: Adding something the owner must review or act on, building the Inbox page or its badge, contributing Inbox items from a module, or storing owner tasks
 ---
 
 # RFC 0009: Inbox
 
-- Status: Proposed
+- Status: Accepted
 - Date: 2026-09-27
+- Accepted: 2026-09-27
 - Decision owners: project owner and implementer
 - Depends on: RFC 0006 (balance observations), RFC 0008 (review state)
 - Relates to: [module contract](../architecture/modules.md), [UI direction](../architecture/ui.md), [overview](../architecture/overview.md#the-two-data-planes), [goals and capital policies](../future/capital-policies.md)
@@ -129,3 +130,7 @@ None. Resolved by the owner on 2026-09-27:
 1. **State location:** a new mutable `app.*` schema.
 2. **Stale-balance threshold:** 30 days for every account.
 3. **Dismissal:** `review` items can only be snoozed; `action` and `info` items can be dismissed until their evidence changes.
+
+## Implementation status
+
+Not implemented. Inbox v1 (owner tasks, the balance items, snooze and dismiss, `/inbox`, and the count) is the first plan.

@@ -17,7 +17,7 @@ Architecture decision records, written as RFCs. Each records the context, the de
 | [0006](0006-balance-observations.md)              | Accepted, implemented                             | Balance observations and net worth                                       |
 | [0007](0007-free-first-provider-selection.md)     | Accepted                                          | Free-first provider order; no stored bank logins                         |
 | [0008](0008-cross-source-transaction-matching.md) | Accepted                                          | Transaction import: association, any-order import, cross-source matching |
-| [0009](0009-inbox.md)                             | Proposed                                          | The Inbox: system items and owner tasks                                  |
+| [0009](0009-inbox.md)                             | Accepted                                          | The Inbox: system items and owner tasks                                  |
 
 ## Conventions
 

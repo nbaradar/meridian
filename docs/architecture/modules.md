@@ -58,8 +58,11 @@ interface ModuleDefinition {
   newsSources?: NewsSource[];
   strategies?: Strategy[];
   executors?: Executor[];
+  attention?: AttentionProvider[]; // Inbox items computed from current state (RFC 0009)
 }
 ```
+
+An `AttentionProvider` is a cheap, read-only, side-effect-free function returning the Inbox items that apply now, each with a stable key, an evidence version, and a severity (`review`, `decision`, `action`, or `info`). It never records a decision or acts; the owning feature does, when the owner chooses ([RFC 0009](../decisions/0009-inbox.md)).
 
 Modules register into a central registry at boot. **Modules may not import from each other.** Cross-module needs go through the ledger or through `src/core/`. This is the rule that keeps the system extensible rather than a ball of mud by month four.
 

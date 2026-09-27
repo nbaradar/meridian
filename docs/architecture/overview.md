@@ -52,6 +52,8 @@ Not all data deserves the same treatment. Same Postgres database, two schemas.
 
 `pg_dump --schema=ledger` is the backup that matters, and it stays small forever regardless of how much price history accumulates.
 
+Two further schemas sit beside the planes and never hold financial facts. `ops.*` ([RFC 0003](../decisions/0003-operational-live-connections.md)) is the live-connection control plane: encrypted credentials, discovery, and checkpoints, under restricted roles and backed up encrypted. `app.*` ([RFC 0009](../decisions/0009-inbox.md)) is the owner's workspace: Inbox tasks, snoozes, and later preferences. It is mutable, small, and backed up with the ledger. A decision about money, even one made from the Inbox, is recorded in `ledger.*` by the feature that owns it.
+
 **Boundary cases:**
 
 - A **fill price** is Plane A — it is part of the transaction.
