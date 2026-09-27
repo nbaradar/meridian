@@ -83,13 +83,22 @@ A **near miss** goes to review with the candidate attached. That means same acco
 
 Provider-supplied identity links, such as a posted transaction naming the pending one it replaces, are version links within one source identity, not cross-source matches.
 
+### Pending connector rows
+
+A connector row the provider marks as pending is stored as an observation but is never counted and never matched. Its processing tip is `ignored` with reason `pending`. When the provider reports it posted, whether as a new version of the same identity or as a new identity that names the pending one, the posted observation is processed normally. A pending hold or a pre-tip amount therefore never creates a transaction. YNAB rows are counted whether or not they are cleared, because the owner entered them deliberately (owner decision, 2026-09-27).
+
 ### Field precedence
 
 A matched transaction keeps one set of ledger values.
 
 - **Amount:** must be equal for an automatic match. If the owner matches differing amounts during review, the connector's amount wins. The transaction is replaced through an exact reversal and a new transaction, and every linked observation's chain moves to the replacement in one atomic operation.
-- **Date:** the transaction keeps the `occurred_on` it was created with. A date difference inside the window does not trigger a replacement. See open question 5.
-- **Category:** the owner's own categorization, or YNAB's, wins over an uncategorized connector row. How a change of category is recorded is open question 3.
+- **Date:** a connector's posted date wins (owner decision, 2026-09-27). When a connector observation matches a transaction introduced with a different date, the transaction is replaced through an exact reversal and a new transaction dated at the connector's date. Its category postings carry over, and every linked observation's chain moves to the replacement in one atomic operation. Between two non-connector sources, such as YNAB and a manual file import, the introducing observation's date is kept.
+- **Category:** the owner's own categorization, or YNAB's, wins over an uncategorized connector row. A change of category is recorded as a reclassification (see below), never by replacing the transaction.
+
+### Reclassification
+
+A category change appends a **reclassification**: a system-originated transaction that references the transaction it reclassifies, posts only to categories, and sums to zero. For example, it posts `+12` to Uncategorized and `−12` to Groceries for a $12 expense. It never posts to an account, so no account balance or match changes. A transaction's current categorization is its own category entries plus those of its reclassifications. A replacement carries the current categorization over, and its reclassifications then start fresh (owner decision, 2026-09-27).
+
 - **Description and memo:** kept on each observation as provenance; the transaction's description comes from the introducing observation.
 
 ### Review
@@ -113,6 +122,7 @@ This replaces the `ledger.reconciliation_checks` gate. Checks are computed on de
 1. **Cardinality:** a source-record version no longer normalizes to at most one transaction through a unique `transactions.source_record_id`. The processing chain proves which transaction each observation currently stands behind, and several observations may stand behind one transaction. `transactions.source_record_id` becomes the introducing observation's version and loses its uniqueness. That applies RFC 0004's planned replacement of the rule.
 2. **External transactions require processing:** a deferred constraint requires every external transaction to be the effective transaction of at least one current `created` or `matched` processing revision, as RFC 0004 required.
 3. **Entry sign:** an account entry is the account's change in net-worth contribution, for assets and liabilities alike. This formalizes the owner's decision of 2026-09-25, recorded in the ledger model.
+4. **Reclassification transactions:** a new system-originated transaction kind that references the transaction it reclassifies. It posts only to category destinations, sums to zero, and is distinct from a correction, which must exactly negate the original. PostgreSQL enforces that it has no account entries and that its target is an existing non-reclassification transaction.
 
 ## Relationship to RFC 0004
 
@@ -159,7 +169,6 @@ No unit silently enables the next.
 ## Open questions
 
 1. **Date window D.** Proposed 5 days. It must cover the gap between a purchase and its posting, and between the date entered in YNAB and the bank's date. To be checked against the owner's YNAB export, where rows YNAB imported from a bank carry bank dates.
-2. **Pending transactions.** Proposed: connector rows marked pending are stored but never counted until posted. YNAB uncleared rows are counted, because the owner entered them deliberately. Confirm.
-3. **Recording a category change.** A change of category is currently a reversal and replacement. Is that acceptable churn, or do we want a lighter "reclassification" transaction that moves the amount between categories (an RFC 0001 amendment)?
-4. **YNAB split transactions.** Proposed: a YNAB split, which is several register rows, is one observation whose total is matched against the bank's single row. The YNAB importer groups the rows. Confirm with the export.
-5. **Date precedence.** Proposed: keep the introducing observation's date. Alternative: prefer the connector's posted date, which means a replacement whenever a connector row matches an earlier YNAB row with a different date.
+2. **YNAB split transactions.** Proposed: a YNAB split, which is several register rows, is one observation whose total is matched against the bank's single row. The YNAB importer groups the rows. Confirm with the export.
+
+Resolved 2026-09-27: pending connector rows are stored but not counted until posted; category changes are reclassifications; a connector's posted date wins.
