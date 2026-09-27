@@ -39,4 +39,4 @@ The highest-stakes software that will run on this host. Requirements, not sugges
 
 - **Secrets encrypted at rest.** Provider tokens sealed with a key from the environment (libsodium/age), never plaintext in the database, never in git.
 - **No public ingress.** Tailscale or equivalent. Do not roll a login page for a system that can move money. Revisiting this belongs to the [expansion decision](../future/expansion.md).
-- **Backups from day one.** `pg_dump --schema=ledger`, age-encrypted, pushed off-box, automated, with a restore that has actually been executed at least once.
+- **Backups from day one.** One encrypted backup of `ledger.*` and `app.*` (the owner's money and workspace, [RFC 0009](../decisions/0009-inbox.md)), plus the separate encrypted `ops.*` backup RFC 0003 requires. Encrypted with age, pushed off-box, automated, with a restore that has actually been executed at least once. `world.*` is never backed up. Decided 2026-09-27.

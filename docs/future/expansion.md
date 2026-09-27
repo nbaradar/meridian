@@ -14,12 +14,12 @@ Not started, on purpose. Formerly `PLAN.md` §12, plus the working rules from `A
 - **Keep the later decision cheap.** Framework-independent domain logic, provider-neutral connectors, canonical accounts independent of any connector, and no hard-coded personal identifiers are what make expansion possible without a rewrite.
 - **Connector requests** ("support institution X") are a future workflow. Today an unsupported institution uses manual entry or file import.
 - **User-entered account details are deferred.** This covers account numbers, routing numbers, institution contact details, and notes a person adds for their own tracking. Do not add fields for them to `ledger.*` or to any existing table ahead of the accepted design. When the feature is built:
-  - **Storage:** a separate, mutable, protected store keyed by canonical account ID. The ledger is append-only and backed up forever, but these details must be editable and truly erasable.
+  - **Storage:** the mutable owner workspace schema `app.*`, keyed by canonical account ID (decided 2026-09-27). The ledger is append-only and backed up forever, but these details must be editable and truly erasable.
   - **Encryption:** encrypt each sensitive field with the existing XChaCha20-Poly1305 envelope under its own versioned environment keyring, authenticating the account ID and field name as associated data.
   - **Display and handling:** masked by default and revealed only on explicit request. Never logged, and never exposed through MCP, an LLM prompt, raw payloads, or fixtures.
   - **Kept apart from connector identity:** these details are separate from the RFC 0003 provider-native identity used for connector matching, and never drive account linking.
   - **Institution name** lives in the same store as a plaintext field, for dashboard grouping.
-  - **Review and timing:** it needs a short RFC first. The owner scheduled it after the balance dashboard, as a single-user feature ahead of any multi-user expansion.
+  - **Review and timing:** it needs a short RFC first. The owner scheduled it after the first live connector (2026-09-27), as a single-user feature ahead of any multi-user expansion.
 
 Meridian may eventually be shared with others who find the dashboard useful. That is not a current goal, and nothing below is implemented. This section is the single place for what is deliberately deferred until then.
 
@@ -48,10 +48,10 @@ Account-level details a person wants to keep for their own reference: account an
 
 The intended design, subject to a short RFC:
 
-- **Not in `ledger.*`.** The ledger is append-only and backed up forever, but these details must be editable and truly erasable. They belong in a separate, mutable, protected store keyed by canonical account ID.
+- **In `app.*`, not `ledger.*`** (decided 2026-09-27). The ledger is append-only and backed up forever, but these details must be editable and truly erasable. They live in the owner workspace schema `app.*` ([RFC 0009](../decisions/0009-inbox.md)), keyed by canonical account ID, with sensitive fields encrypted. Ledger code never reads them: the dashboard page combines balances with institution names at the presentation layer.
 - **Encrypted per field.** Use the existing libsodium XChaCha20-Poly1305 envelope under a dedicated, versioned environment keyring, separate from the raw-payload, credential, and provider-identity keyrings. The account ID and field name are authenticated as associated data so ciphertext cannot be moved between accounts or fields.
 - **Masked by default.** Show the last four digits or less, with an explicit reveal. Never log them, and never expose them through MCP, LLM prompts, raw payloads, exports, or fixtures.
 - **Not identity.** User-entered details are separate from the protected provider-native identity used for connector matching (RFC 0003), and never drive account linking or deduplication.
 - **Institution name** is a plaintext field in the same store (not sensitive), so the dashboard can group accounts by institution.
-- **Timing.** The owner chose to build this after the balance dashboard (September 25, 2026), ahead of multi-user expansion.
+- **Timing.** After the first live connector, ahead of multi-user expansion (owner, 2026-09-27; this replaces the September 25 choice of "right after the balance dashboard"). The current order is in [status](../status.md).
 - **Effort.** Moderate. The encryption primitives and keyring pattern already exist; the new work is the store, key rotation, the edit/reveal UI, and tests proving plaintext never reaches logs or unencrypted columns.
