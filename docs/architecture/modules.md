@@ -64,6 +64,8 @@ interface ModuleDefinition {
 
 An `AttentionProvider` is a cheap, read-only, side-effect-free function returning the Inbox items that apply now, each with a stable key, an evidence version, and a severity (`review`, `decision`, `action`, or `info`). It never records a decision or acts; the owning feature does, when the owner chooses ([RFC 0009](../decisions/0009-inbox.md)).
 
+Until [Plan 0006](../plans/0006-review-queue-and-inbox-items-after-0003-0005.md) builds `ModuleDefinition` and the registry, attention providers are passed to `createInboxService` as a list composed by the app layer (`src/app/inbox/inbox-service.ts`); today that list holds only the core balance provider from `src/core/inbox/`. Each provider's items are validated with Zod, and their keys must start with the provider id.
+
 Modules register into a central registry at boot. **Modules may not import from each other.** Cross-module needs go through the ledger or through `src/core/`. This is the rule that keeps the system extensible rather than a ball of mud by month four.
 
 `capabilities` on the connector is load-bearing: most institutions are read-only. Read connectors yield validated observations, not ledger events; only a separately accepted source-authority service may turn an observation into financial facts. The UI must degrade gracefully when an account cannot trade rather than assuming execution is universal.

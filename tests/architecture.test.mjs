@@ -130,3 +130,47 @@ test("operational key access stays inside protected-data and read workers", asyn
     );
   }
 });
+
+test("the ledger core never depends on the Inbox", async () => {
+  const files = await sourceFiles("src/core/ledger");
+  for (const file of files) {
+    const source = await readFile(file, "utf8");
+    expect(source, file).not.toMatch(
+      /(?:from|import\s*)[\s(]*["'][^"']*(?:core\/inbox|\.\.\/inbox)[^"']*["']/u,
+    );
+  }
+});
+
+test("only the Inbox adapters and schema access app.* tables", async () => {
+  const allowed = new Set([
+    "src/infrastructure/database/schema.ts",
+    "src/infrastructure/database/postgres-inbox-tasks.ts",
+    "src/infrastructure/database/postgres-inbox-item-states.ts",
+  ]);
+  const files = await sourceFiles("src");
+  for (const file of files) {
+    if (allowed.has(file)) continue;
+    const source = await readFile(file, "utf8");
+    expect(source, file).not.toMatch(
+      /\b(?:from|into|update|join|table)\s+"?app"?\.|\binbox(?:Tasks|ItemStates)\b|pgSchema\(\s*["']app["']/iu,
+    );
+  }
+});
+
+test("Inbox code never writes to the ledger", async () => {
+  const files = [
+    ...(await sourceFiles("src/core/inbox")),
+    ...(await sourceFiles("src/app/inbox")),
+    "src/infrastructure/database/postgres-inbox-tasks.ts",
+    "src/infrastructure/database/postgres-inbox-item-states.ts",
+  ];
+  for (const file of files) {
+    const source = await readFile(file, "utf8");
+    expect(source, file).not.toMatch(
+      /\b(?:insert\s+into|update|delete\s+from)\s+ledger\./iu,
+    );
+    expect(source, file).not.toMatch(
+      /\b(?:recordObservation|recordYnabObservation|retractObservation|recordManualBalance|correctBalance|retractBalance|recordYnabBalance|createAccount|createCategory)\b/u,
+    );
+  }
+});

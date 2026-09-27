@@ -677,3 +677,51 @@ button.secondary:hover:not(:disabled) {
     width: 100%;
   }
 }
+
+/* Inbox (RFC 0009) */
+textarea {
+  width: 100%;
+  min-width: 0;
+  min-height: 4.5rem;
+  border: 1px solid #3b4a42;
+  border-radius: 0;
+  outline: none;
+  padding: 0.8rem 0.85rem;
+  background: #0c120f;
+  color: #edf2ee;
+  font: inherit;
+  font-size: 0.9rem;
+  letter-spacing: normal;
+  text-transform: none;
+  resize: vertical;
+}
+
+textarea:focus {
+  border-color: #8bc5a1;
+  box-shadow: 0 0 0 1px #8bc5a1;
+}
+
+.inbox-edit {
+  display: grid;
+  gap: 1rem;
+  padding: 1rem 0;
+}
+
+.inbox-note {
+  margin: 0;
+  color: #bdc9c1;
+  font-size: 0.85rem;
+  line-height: 1.5;
+  white-space: pre-wrap;
+}
+
+.inbox-done-title {
+  color: #8a968f;
+  text-decoration: line-through;
+}
+
+/* An Inbox item's link lands on its dashboard row. */
+.balance-row:target {
+  outline: 1px solid #d8a94d;
+  outline-offset: 0.4rem;
+}

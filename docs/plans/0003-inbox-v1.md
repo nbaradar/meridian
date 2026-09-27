@@ -1,11 +1,12 @@
 ---
-summary: Plan 0003 (Approved): Inbox v1, owner tasks, computed balance items, snooze and dismiss, the /inbox page, and the Inbox count, per RFC 0009
+summary: Plan 0003 (Done): Inbox v1, owner tasks, computed balance items, snooze and dismiss, the /inbox page, and the Inbox count, per RFC 0009
 read_when: Designing, resuming, or implementing the first Inbox unit
 ---
 
 # Plan 0003: Inbox v1
 
-- Status: Approved
+- Status: Done
+- Completed: 2026-09-27
 - Date: 2026-09-27
 - Approved: 2026-09-27
 - Related RFCs: [RFC 0009](../decisions/0009-inbox.md) (the Inbox, primary); [RFC 0006](../decisions/0006-balance-observations.md) (the balance data the first items read)
@@ -103,18 +104,18 @@ None.
 
 ## Acceptance criteria
 
-- [ ] Migration `0015` creates schema `app` with `app.inbox_tasks` and `app.inbox_item_states`, their constraints, and the grants above. `pnpm db:generate` then shows no drift.
-- [ ] `/inbox` lists balance items and open tasks grouped `review`, `decision`, `action`, `info` in the ordering above, then Snoozed, Dismissed, and Done groups.
-- [ ] Each balance kind appears under exactly its condition, including the 30/31-day boundary. It disappears on its own once the condition is fixed, for example by recording a new balance.
-- [ ] Each item links to its account's row on `/`.
-- [ ] The owner can add a task with every optional field, then edit, complete, reopen, and delete it. Invalid titles and links are rejected with a clear message.
-- [ ] The owner can snooze an item for 1 day, 1 week, 1 month, or a chosen date. It moves to Snoozed and returns on that date or when its version changes.
-- [ ] The owner can dismiss `action` items. `review` items offer no dismiss, and core refuses one. A dismissed item returns when its version changes.
-- [ ] Restore returns a snoozed or dismissed item to its active group.
-- [ ] `Inbox (N)` appears on `/`, `/setup`, `/ynab`, and `/inbox`, counting exactly as defined above.
-- [ ] A throwing provider yields one `info` item and the rest of the Inbox still renders.
-- [ ] No Inbox code path writes to `ledger.*`, and `src/core/ledger/` does not import `src/core/inbox/`.
-- [ ] All Definition of Done checks pass.
+- [x] Migration `0015` creates schema `app` with `app.inbox_tasks` and `app.inbox_item_states`, their constraints, and the grants above. `pnpm db:generate` then shows no drift.
+- [x] `/inbox` lists balance items and open tasks grouped `review`, `decision`, `action`, `info` in the ordering above, then Snoozed, Dismissed, and Done groups.
+- [x] Each balance kind appears under exactly its condition, including the 30/31-day boundary. It disappears on its own once the condition is fixed, for example by recording a new balance.
+- [x] Each item links to its account's row on `/`.
+- [x] The owner can add a task with every optional field, then edit, complete, reopen, and delete it. Invalid titles and links are rejected with a clear message.
+- [x] The owner can snooze an item for 1 day, 1 week, 1 month, or a chosen date. It moves to Snoozed and returns on that date or when its version changes.
+- [x] The owner can dismiss `action` items. `review` items offer no dismiss, and core refuses one. A dismissed item returns when its version changes.
+- [x] Restore returns a snoozed or dismissed item to its active group.
+- [x] `Inbox (N)` appears on `/`, `/setup`, `/ynab`, and `/inbox`, counting exactly as defined above.
+- [x] A throwing provider yields one `info` item and the rest of the Inbox still renders.
+- [x] No Inbox code path writes to `ledger.*`, and `src/core/ledger/` does not import `src/core/inbox/`.
+- [x] All Definition of Done checks pass.
 
 ## Tests required
 
@@ -140,12 +141,12 @@ Also run through `/inbox` in a browser against a disposable database with synthe
 
 ## Documentation to update
 
-- [ ] [docs/status.md](../status.md) (replace) and [docs/history.md](../history.md) (one entry)
-- [ ] [RFC 0009](../decisions/0009-inbox.md): Implementation status only (Inbox v1 built; registry and further providers in Plan 0006)
-- [ ] [Module contract](../architecture/modules.md): note that providers are passed in until Plan 0006 builds the registry
-- [ ] [Architecture overview](../architecture/overview.md): confirm the `app.*` description matches what was built (tables and grants)
-- [ ] [README.md](../../README.md): the Inbox row in "What works today" and a short "Using the current screens" note
-- [ ] `AGENTS.md`, only if a rule or the routing table changed
+- [x] [docs/status.md](../status.md) (replace) and [docs/history.md](../history.md) (one entry)
+- [x] [RFC 0009](../decisions/0009-inbox.md): Implementation status only (Inbox v1 built; registry and further providers in Plan 0006)
+- [x] [Module contract](../architecture/modules.md): note that providers are passed in until Plan 0006 builds the registry
+- [x] [Architecture overview](../architecture/overview.md): confirm the `app.*` description matches what was built (tables and grants)
+- [x] [README.md](../../README.md): the Inbox row in "What works today" and a short "Using the current screens" note
+- [x] `AGENTS.md`, only if a rule or the routing table changed
 
 ## Stop and ask if
 
@@ -157,4 +158,17 @@ Also run through `/inbox` in a browser against a disposable database with synthe
 
 ## Completion record
 
-When Done: date, verified counts, deviations and why, what was not verified, follow-ups.
+- **Date:** 2026-09-27.
+- **Verified:** `pnpm format:check`, `lint`, `typecheck`, `test` (214 unit tests, 18 files; 32 new: 29 in `tests/inbox.test.ts`, 3 architecture), `build`, and `test:integration` (127 tests, 9 files; 8 new in `tests/integration/inbox.test.ts`) pass. `pnpm db:generate` shows no drift. Migration `0015_dusty_earthquake.sql` is applied to the local database.
+- **Browser check:** done against a disposable database with synthetic accounts, served by a production build: all three kinds and their order; a 30-day balance absent and a 31-day balance present; a task with every field; an invalid link and a blank title rejected with messages; edit, done, reopen, and delete; all four snooze choices with their return dates; dismiss and Restore; no Dismiss on the review item; a new balance clearing a snoozed stale item; item links landing on the highlighted dashboard row; the count on `/`, `/setup`, `/ynab`, and `/inbox`. Pages rendered in about 30 ms with the count, so the count's cost is not noticeable. `/inbox` then rendered against the local database without errors.
+- **Deviations:**
+  - The provider interface validates each provider's items with Zod and requires keys to start with the provider id; malformed or duplicate items fail that provider only (the "Zod at every boundary" rule).
+  - `since` is a UTC timestamp; a stale balance's is midnight UTC of `observed_on` + 31 days.
+  - `balanceAttentionItems` reuses `computeNetWorth`'s classification, so the Inbox and the dashboard can't disagree about missing or closed balances.
+  - The database link check also refuses whitespace, control characters, and backslashes, since browsers rewrite `/\host` and `/\t/host` into protocol-relative links. Zod applies the same rule.
+  - `inbox_tasks_time_check` requires `updated_at` and `completed_at` to be no earlier than `created_at`.
+  - `constraintName` moved next to `postgresErrorCode` in `postgres-account-sources.ts` so both Postgres adapters share it.
+  - Found in the browser check: React resets a form's fields after every action, so a rejected task form lost its input. Failed add and edit submissions now remount the fields with what was typed.
+  - The first generated migration had a malformed link regex (`\]` escaped the bracket). The integration tests caught it before commit. Migration `0015` was regenerated, and the local database's empty `app` schema and its one migration record were dropped and reapplied.
+- **Not verified:** the provider-failure `info` item in a browser (unit-tested only); a chosen snooze date of today reaching core from the browser (the date input's `min` blocks it first; core's refusal is unit-tested).
+- **Follow-ups:** the module registry, more providers, and per-account review counts on the dashboard (Plan 0006); backing up `app.*` (Plan 0012); an account-closing command, which tests currently do with SQL.
