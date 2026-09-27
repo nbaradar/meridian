@@ -18,7 +18,7 @@ Each entry is the document's `read_when`; its `summary` is in the document's own
 - [architecture/ui.md](architecture/ui.md): Building or restyling any page or navigation
 - [architecture/hosting.md](architecture/hosting.md): Deploying, running jobs unattended, or choosing where Meridian runs
 - [institutions.md](institutions.md): Building or choosing a connector, market data or news provider, or anything touching a specific institution
-- [future/capital-policies.md](future/capital-policies.md): Designing goals, strategies, policies, recommendations, emergency-reserve or duration logic, AI explanations of financial findings, or the Phase 3 strategy engine
+- [future/capital-policies.md](future/capital-policies.md): Designing goals, strategies, policies, recommendations, emergency-reserve or duration logic, DCA reminders, a policy or settings configuration page, AI explanations of financial findings, or the Phase 3 strategy engine
 - [future/expansion.md](future/expansion.md): Anything involving other users, authentication, sharing, per-user keys, connector requests, or storing account and routing numbers
 - [plans/README.md](plans/README.md): Designing the next unit of work, starting an approved plan, or checking what is in progress
 - [decisions/README.md](decisions/README.md): Looking for the reasoning behind an implemented boundary, or writing a new RFC

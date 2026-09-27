@@ -47,6 +47,7 @@ Every `needs_review` observation, balance discrepancy, and stale uncleared YNAB 
 
 - Review screen layout and what evidence to show (candidates, date and amount deltas, payee).
 - Whether to allow bulk actions.
+- Whether to include the owner's configurable stale-balance threshold (a reminder preference in `app.*`, which needs a short RFC superseding RFC 0009's fixed 30 days), or leave it to its own plan. See [capital policies](../future/capital-policies.md#owner-ideas-2026-09-27).
 
 ## Steps
 

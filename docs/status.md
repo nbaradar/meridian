@@ -36,8 +36,8 @@ Replace, don't append; finished detail goes to [history.md](history.md) as a sho
    8. [Plan 0011](plans/0011-account-details-store.md): account details store (needs its RFC; scheduled after 0008).
    9. [Plan 0012](plans/0012-encrypted-backups.md): encrypted backups and a tested restore (deferred by the owner; completes Phase 0 with 0005).
 8. **RFCs still to draft:** connector balance sources (amends RFC 0006; before Plans 0008 and 0009); account details (before Plan 0011).
-9. **Needs design, no plan yet:** transfer pairing; categorization UI and rule-based auto-categorization; spending views; the Schwab read connector (blocked on RFC 0003's authorization gate); Robinhood and Fidelity paths beyond file import (SnapTrade pricing is open); Phases 2 to 7 in `PLAN.md`.
-10. **Later, Phase 3:** goals as capital buckets and a deterministic policy engine whose findings reach the Inbox as decisions ([capital policies](future/capital-policies.md)); needs categorized spending and positions first.
+9. **Needs design, no plan yet:** a configurable stale-balance threshold and a settings page for reminder preferences (candidate for Plan 0006; [owner ideas](future/capital-policies.md#owner-ideas-2026-09-27)); transfer pairing; categorization UI and rule-based auto-categorization; spending views; the Schwab read connector (blocked on RFC 0003's authorization gate); Robinhood and Fidelity paths beyond file import (SnapTrade pricing is open); Phases 2 to 7 in `PLAN.md`.
+10. **Later, Phase 3:** goals as capital buckets and a deterministic policy engine whose findings reach the Inbox as decisions, including DCA reminders and missed-contribution warnings, configured from one policy page ([capital policies](future/capital-policies.md)); needs categorized spending and positions first.
 
 ## Plans ([index](plans/README.md))
 
