@@ -93,7 +93,7 @@ Completed August 2, 2026. See [docs/history.md](docs/history.md#foundation--appl
 In progress; see [docs/status.md](docs/status.md).
 
 ### Phase 1 — Aggregation + YNAB replacement
-Bank connector (SimpleFIN first, Teller fallback) for bank and credit-card accounts. Evaluate an official **Schwab Trader API connector in read-only mode**, but defer it unless the actual authorization grant and process isolation prove the read worker cannot place orders. Sync scheduling via pg-boss. Transfer pairing. Categories, categorization UI, rule-based auto-categorization. Spending views.
+Bank connector (Teller first, Plaid Trial for gaps, SimpleFIN as the paid backstop; see RFC 0007) for bank and credit-card accounts. Evaluate an official **Schwab Trader API connector in read-only mode**, but defer it unless the actual authorization grant and process isolation prove the read worker cannot place orders. Sync scheduling via pg-boss. Transfer pairing. Categories, categorization UI, rule-based auto-categorization. Spending views.
 
 Fidelity and Robinhood enter via CSV import at this stage; promote to live connectors only if SnapTrade pricing works for one user.
 
@@ -139,7 +139,7 @@ An MCP server over Plane A read views plus the news feed, so financial questions
 
 - [x] ~~Which institutions?~~ — decided; the owner's inventory is private (gitignored `local/`). Provider paths are in §6.
 - [x] ~~Which broker for phase 4–5?~~ — **Schwab**, direct via Trader API. Alpaca paper retained solely as a test harness.
-- [ ] **SimpleFIN coverage check** for each bank to be connected. Test before paying; Teller is the fallback.
+- [ ] **Aggregator coverage check** for each bank to be connected: Teller first, then Plaid Trial for any gap (RFC 0007).
 - [ ] **Fidelity access path.** Confirm whether SnapTrade's Fidelity integration is Fidelity Access-based. If not, CSV import.
 - [ ] **Schwab refresh-token lifetime and re-auth flow.** Blocking for phase 5 unattended operation. Resolve during phase 2.
 - [ ] **SnapTrade single-user pricing.** If unworkable, Robinhood and Fidelity stay on CSV import indefinitely.

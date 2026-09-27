@@ -15,7 +15,7 @@ It is built for one owner today and designed so it can later be shared. The full
 | Save balances from a YNAB export for saved accounts (`/ynab`)                                                                   | ✅ Available                   |
 | Account details: institution name, encrypted account and routing numbers                                                        | 📋 Planned after the dashboard |
 | Import YNAB transactions and categories                                                                                         | 📋 Planned                     |
-| Live bank sync (SimpleFIN first)                                                                                                | 📋 Planned                     |
+| Live bank sync (Teller first, Plaid Trial for gaps)                                                                             | 📋 Planned                     |
 | Spending by category                                                                                                            | 📋 Planned                     |
 | Investments, market data, performance                                                                                           | 📋 Planned                     |
 | Strategies, approval queue, execution                                                                                           | 📋 Planned                     |

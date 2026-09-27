@@ -163,3 +163,9 @@ RFC 0004 rollout unit two, migration `0013_previous_catseye.sql`: append-only `l
 - The owner confirmed the entry sign convention (net-worth sign for every account entry), now in the [ledger model](architecture/ledger-model.md#entry-sign-convention).
 
 Verified: 197 unit and 128 integration tests across fourteen migrations, no schema drift, production build. The migration was applied to the local database. There is no UI or route yet.
+
+## 2026-09-27 — Direction change to cross-source matching; RFC 0007 accepted
+
+The owner chose any-order transaction import from YNAB and live connectors, with conservative cross-source matching and a review Inbox, over RFC 0004's cutover design. RFC 0004 units three to six will not be built as designed; RFC 0008 (matching) and RFC 0009 (Inbox) are to be drafted.
+
+[RFC 0007](decisions/0007-free-first-provider-selection.md) accepted: providers are chosen free first (official institution APIs, Teller, Plaid Trial for gaps, manual file import), with SimpleFIN as the paid backstop, replacing RFC 0003's SimpleFIN-first order. Meridian never stores an institution login and never scrapes.

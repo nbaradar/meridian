@@ -1,5 +1,5 @@
 ---
-summary: Per-institution read/write access, provider options (Schwab, SimpleFIN, Teller, Plaid, SnapTrade, Fidelity Access, Robinhood), connector build order, market data and news sources
+summary: Per-institution read/write access, provider options (Schwab, Teller, Plaid, SimpleFIN, SnapTrade, Fidelity Access, Robinhood), the free-first provider order, connector build order, market data and news sources
 read_when: Building or choosing a connector, market data or news provider, or anything touching a specific institution
 ---
 
@@ -20,6 +20,7 @@ Rules that follow:
 
 - **Schwab is the only write-capable equities path.** Do not write an executor for any other institution without an explicit task saying so.
 - **Never use unofficial or reverse-engineered broker APIs**, Robinhood's especially. They violate ToS and risk account termination. If a task implies one, stop and ask.
+- **Never store an institution login, and never scrape** ([RFC 0007](decisions/0007-free-first-provider-selection.md)). No headless browser automation against an institution. The only permitted automation runs in the owner's own logged-in browser and only downloads offered statement files.
 - **Fidelity cannot be reached through Plaid.** Do not add a Plaid-based Fidelity connector; it will be blocked.
 - **Schwab has no paper environment.** Execution-machinery tests run against the `AlpacaPaperExecutor` harness. Never point a test at `SchwabExecutor` with live credentials.
 - Options, futures, forex, crypto, bonds, and non-US equities are **not** tradeable via the Schwab Trader API beyond equities/ETFs/options. Reject unsupported instruments at the intent layer, not at the broker.
@@ -55,9 +56,12 @@ The API's overall feature set does not make its credential safe for the read con
 
 ### Bank aggregation
 
-- **SimpleFIN Bridge** — ~$15/yr, read-only, daily refresh. Purpose-built for personal finance tools. **Check coverage of each bank before paying**; it is a small network.
-- **Teller** — free developer tier, limited live connections, US bank focus. Fallback if SimpleFIN misses any.
-- **Plaid** — broadest coverage, but sales-led access and opaque individual pricing. **Cannot reach Fidelity** (see below).
+Order per [RFC 0007](decisions/0007-free-first-provider-selection.md): free first, checking coverage per institution before connecting.
+
+- **Teller** — first choice for banks and credit cards. Free development environment with real bank data and 100 enrollments (one enrollment is one bank login; deleting one does not restore the count). US banks and cards, no brokerages. Browser authorization via Teller Connect.
+- **Plaid Trial** — only for institutions Teller cannot reach. Free for teams created on or after April 15, 2026: production data, 10 Items (one per institution login; removing an Item does not free a slot), with Transactions, Balance, Investments, and Liabilities. No expiry is documented. Paid pricing is sales-led. Develop against Plaid Sandbox, never by spending Trial slots. **Cannot reach Fidelity** (see below).
+- **SimpleFIN Bridge** — ~$15/yr, read-only, daily refresh, purpose-built for personal finance tools. The paid backstop if a free tier is withdrawn or cannot cover an institution.
+- **Manual file import** (CSV, OFX/QFX) — the universal fallback, one importer per format. Cross-source matching makes periodic manual exports safe to repeat.
 
 ### Fidelity — the constrained one
 
@@ -77,7 +81,7 @@ Aggregators with Fidelity Access include Akoya, Finicity, Yodlee, MX, and ByAllA
 
 ### Connector build order
 
-1. **Bank aggregator** — SimpleFIN first, Teller as fallback.
+1. **Bank aggregator** — Teller first, Plaid Trial for gaps, SimpleFIN as the paid backstop; manual file import for anything uncovered.
 2. **Schwab Trader API read adapter** — only after the non-trading authorization gate is proven; the write executor remains phase 4–5 work.
 3. **SnapTrade** — Robinhood and Fidelity read, only if single-user pricing works. Otherwise CSV import for both.
 

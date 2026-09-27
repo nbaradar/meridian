@@ -27,3 +27,4 @@ Each entry is the document's `read_when`; its `summary` is in the document's own
 - [decisions/0004-transaction-source-authority.md](decisions/0004-transaction-source-authority.md): Importing or normalizing transactions, reconciliation, authority windows, or the YNAB cutover
 - [decisions/0005-ynab-account-persistence.md](decisions/0005-ynab-account-persistence.md): Changing YNAB account saving, recognition, renamed or excluded accounts, or the YNAB label digest key
 - [decisions/0006-balance-observations.md](decisions/0006-balance-observations.md): Recording or displaying balances, computing net worth, correcting a balance, or adding a new balance source
+- [decisions/0007-free-first-provider-selection.md](decisions/0007-free-first-provider-selection.md): Choosing or building a bank, brokerage, or crypto connector, adding a provider to the source registry, or considering scraping or browser automation

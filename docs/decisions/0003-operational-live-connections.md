@@ -10,6 +10,7 @@ read_when: Building a live connector, handling provider credentials or identity,
 - Decision owners: project owner and implementer
 - Depends on: RFC 0002
 - Related: accepted RFC 0004
+- Amended by: [RFC 0007](0007-free-first-provider-selection.md) (provider order replaces decision 9, SimpleFIN-first)
 
 ## Context
 
