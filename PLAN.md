@@ -108,6 +108,7 @@ Fidelity and Robinhood enter via CSV import at this stage; promote to live conne
 
 ### Phase 3 — Goals + strategy engine, simulation only
 Goal objects and progress tracking. DCA strategy definitions (fixed amount, value-averaging, volatility-scaled, dip-triggered). Backtesting against ingested history. **No execution.**
+Intended direction: goals as capital buckets with horizons, liquidity, and loss tolerance, and a deterministic policy engine (reserve, duration matching, allocation, DCA) whose findings reach the owner as Inbox decisions ([capital policies](docs/future/capital-policies.md)).
 **Done when:** a strategy can be defined, backtested, and its intents inspected — and has run in shadow mode for a month logging what it *would* have done.
 
 ### Phase 4 — Approval queue + paper execution
