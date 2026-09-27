@@ -20,6 +20,8 @@ import {
 
 const ledger = pgSchema("ledger");
 const ops = pgSchema("ops");
+// RFC 0009: the owner's mutable workspace. Never holds financial facts.
+const app = pgSchema("app");
 const recordedAt = () =>
   timestamp("recorded_at", { withTimezone: true, mode: "string" })
     .notNull()
@@ -960,6 +962,104 @@ export const connectionEvents = ops.table(
     index("connection_events_connection_idx").on(
       table.connectionId,
       table.recordedAt,
+    ),
+  ],
+);
+
+// RFC 0009: owner tasks. Mutable workspace state, not financial facts; the
+// optional account reference only links a task to where it applies.
+export const inboxTasks = app.table(
+  "inbox_tasks",
+  {
+    id: uuid("id").primaryKey(),
+    title: text("title").notNull(),
+    note: text("note"),
+    accountId: uuid("account_id"),
+    link: text("link"),
+    dueOn: date("due_on", { mode: "string" }),
+    status: text("status").notNull(),
+    createdAt: timestamp("created_at", {
+      withTimezone: true,
+      mode: "string",
+    }).notNull(),
+    updatedAt: timestamp("updated_at", {
+      withTimezone: true,
+      mode: "string",
+    }).notNull(),
+    completedAt: timestamp("completed_at", {
+      withTimezone: true,
+      mode: "string",
+    }),
+  },
+  (table) => [
+    foreignKey({
+      name: "inbox_tasks_account_fk",
+      columns: [table.accountId],
+      foreignColumns: [accounts.id],
+    }),
+    check(
+      "inbox_tasks_title_check",
+      sql`length(btrim(${table.title})) > 0 and ${table.title} = btrim(${table.title}) and char_length(${table.title}) <= 200`,
+    ),
+    check(
+      "inbox_tasks_note_check",
+      sql`${table.note} is null or (length(btrim(${table.note})) > 0 and char_length(${table.note}) <= 2000)`,
+    ),
+    // An in-app path with a single leading slash, or an absolute http(s) URL.
+    // Whitespace, control characters, and backslashes are refused because
+    // browsers rewrite them into protocol-relative or scheme-changing links.
+    check(
+      "inbox_tasks_link_check",
+      sql`${table.link} is null or (
+        char_length(${table.link}) <= 2048
+        and ${table.link} !~ '[[:space:][:cntrl:]\\\\]'
+        and (${table.link} ~ '^/([^/]|$)' or ${table.link} ~* '^https?://[^/]')
+      )`,
+    ),
+    check("inbox_tasks_status_check", sql`${table.status} in ('open', 'done')`),
+    check(
+      "inbox_tasks_completed_check",
+      sql`(${table.status} = 'done') = (${table.completedAt} is not null)`,
+    ),
+    check(
+      "inbox_tasks_time_check",
+      sql`${table.updatedAt} >= ${table.createdAt}
+        and (${table.completedAt} is null or ${table.completedAt} >= ${table.createdAt})`,
+    ),
+    index("inbox_tasks_status_idx").on(table.status),
+  ],
+);
+
+// RFC 0009: one snooze or dismissal per system item. A row applies only while
+// `item_version` equals the item's current version; Restore deletes it.
+export const inboxItemStates = app.table(
+  "inbox_item_states",
+  {
+    itemKey: text("item_key").primaryKey(),
+    itemVersion: text("item_version").notNull(),
+    state: text("state").notNull(),
+    snoozedUntil: date("snoozed_until", { mode: "string" }),
+    recordedAt: timestamp("recorded_at", {
+      withTimezone: true,
+      mode: "string",
+    }).notNull(),
+  },
+  (table) => [
+    check(
+      "inbox_item_states_key_check",
+      sql`length(btrim(${table.itemKey})) > 0 and char_length(${table.itemKey}) <= 500`,
+    ),
+    check(
+      "inbox_item_states_version_check",
+      sql`length(btrim(${table.itemVersion})) > 0 and char_length(${table.itemVersion}) <= 500`,
+    ),
+    check(
+      "inbox_item_states_state_check",
+      sql`${table.state} in ('snoozed', 'dismissed')`,
+    ),
+    check(
+      "inbox_item_states_snooze_check",
+      sql`(${table.state} = 'snoozed') = (${table.snoozedUntil} is not null)`,
     ),
   ],
 );

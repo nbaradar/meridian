@@ -1,5 +1,6 @@
 import Link from "next/link";
 
+import { InboxLink } from "../inbox/inbox-link";
 import { YnabMappingReview } from "./ynab-mapping-review";
 
 export const dynamic = "force-dynamic";
@@ -28,6 +29,7 @@ export default function YnabImportReviewPage() {
         <Link className="text-link" href="/setup">
           Setup
         </Link>
+        <InboxLink />
       </nav>
       <YnabMappingReview />
     </main>

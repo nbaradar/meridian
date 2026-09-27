@@ -72,6 +72,22 @@ export function postgresErrorCode(error: unknown): string | undefined {
   return undefined;
 }
 
+export function constraintName(error: unknown): string | undefined {
+  let current = error;
+  for (let depth = 0; depth < 5; depth += 1) {
+    if (typeof current !== "object" || current === null) return undefined;
+    if (
+      "constraint_name" in current &&
+      typeof current.constraint_name === "string"
+    ) {
+      return current.constraint_name;
+    }
+    if (!("cause" in current)) return undefined;
+    current = current.cause;
+  }
+  return undefined;
+}
+
 export async function insertAccountSource(
   executor: SqlExecutor,
   source: NewAccountSource,

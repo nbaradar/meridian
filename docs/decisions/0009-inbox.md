@@ -133,4 +133,4 @@ None. Resolved by the owner on 2026-09-27:
 
 ## Implementation status
 
-Not implemented. Inbox v1 (owner tasks, the balance items, snooze and dismiss, `/inbox`, and the count) is the first plan.
+Inbox v1 is built ([Plan 0003](../plans/0003-inbox-v1.md), 2026-09-27): the `app` schema with `app.inbox_tasks` and `app.inbox_item_states` (migration `0015`), the three balance items, owner tasks, snooze and dismiss with Restore, `/inbox`, and `Inbox (N)` on every page. Core lives in `src/core/inbox/`. Providers are passed to the Inbox service as a list composed by the app layer; the `ModuleDefinition` registry and the matching and YNAB providers come in [Plan 0006](../plans/0006-review-queue-and-inbox-items-after-0003-0005.md), as does the dashboard's per-account review count.

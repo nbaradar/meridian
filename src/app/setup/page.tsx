@@ -6,6 +6,7 @@ import Link from "next/link";
 import { createDatabase } from "@/infrastructure/database/client";
 import { createPostgresLedgerDestinationStore } from "@/infrastructure/database/postgres-ledger-destinations";
 
+import { InboxLink } from "../inbox/inbox-link";
 import { AccountForm, CategoryForm } from "../manual/manual-entry-forms";
 
 export const dynamic = "force-dynamic";
@@ -47,6 +48,7 @@ export default async function SetupPage() {
         <Link className="text-link" href="/">
           Net worth
         </Link>
+        <InboxLink />
       </nav>
 
       <Link className="workflow-link" href="/ynab">

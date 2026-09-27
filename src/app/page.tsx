@@ -17,6 +17,7 @@ import {
   RecordBalanceForm,
 } from "./balances/balance-forms";
 import { formatUsd } from "./format";
+import { InboxLink } from "./inbox/inbox-link";
 
 export const dynamic = "force-dynamic";
 
@@ -71,7 +72,10 @@ function AccountRow({
   const { account, balance } = item;
   const closed = account.status === "closed";
   return (
-    <li className={closed ? "balance-row closed" : "balance-row"}>
+    <li
+      className={closed ? "balance-row closed" : "balance-row"}
+      id={`account-${account.id}`}
+    >
       <div className="balance-main">
         <span>
           {account.name}
@@ -149,6 +153,7 @@ export default async function NetWorthPage() {
         <Link className="text-link" href="/ynab">
           YNAB migration
         </Link>
+        <InboxLink />
       </nav>
 
       <section className="forms-grid single" aria-label="Record a balance">
