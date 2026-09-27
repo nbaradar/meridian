@@ -102,6 +102,8 @@ The 30-day thresholds are provider constants, not schema.
 
 ## Open questions
 
-1. **State location:** a new mutable `app.*` schema (proposed), or another home?
-2. **Stale-balance threshold:** 30 days for every account (proposed), or longer for accounts that rarely change, such as retirement or loans?
-3. **Dismissal:** may `review` items be dismissed, or only snoozed (proposed)?
+None. Resolved by the owner on 2026-09-27:
+
+1. **State location:** a new mutable `app.*` schema.
+2. **Stale-balance threshold:** 30 days for every account.
+3. **Dismissal:** `review` items can only be snoozed; `action` and `info` items can be dismissed until their evidence changes.
